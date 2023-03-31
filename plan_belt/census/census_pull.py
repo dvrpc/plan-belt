@@ -75,6 +75,7 @@ class acsTable:
             + self.apikey
         )
         self.r = requests.get(self.api_url)
+        self.make_dataframe()
 
     def _validate_table_type(self):
         if self.table_type.lower() == "detailed/":
