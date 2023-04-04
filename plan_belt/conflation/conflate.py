@@ -209,29 +209,9 @@ def conflator(
     print(f"conflating {input_table} to {base_layer}")
     db.execute(query)
 
-
-def rejoiner(
-    base_layer: str,
-):
-    query = f"""
-        drop table if exists rejoined.all;
-        create table rejoined.all as
-        select 
-            a."index", 
-            a.geom, 
-            b.crrate, 
-            b.ksicrrate,
-            b.vulcrrate,
-        from public.{base_layer} a
-        left join rejoined.crash_seg b
-            on b."index" = a."index" 
-    """
-    db.execute(query)
-
-
 if __name__ == "__main__":
     conflation_schema()
 
     # nj_transit routes, possible coverage >=80
     conflator("nj_transit_routes", "njt", "uid", "nj_centerline", "b.line", 8, 80)
-    rejoiner()
+
