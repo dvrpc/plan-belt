@@ -8,12 +8,10 @@ gis_db = Database.from_config("gis", "gis")
 
 
 def conflation_schema():
-    query = """drop schema if exists tmp CASCADE;
-                create schema tmp;
-                drop schema if exists conflated CASCADE;
-                create schema conflated;
-                drop schema if exists rejoined CASCADE;
-                create schema rejoined;"""
+    query = """
+        create schema if not exists tmp;
+        create schema if not exists conflated;
+        create schema if not exists rejoined;"""
     db.execute(query)
 
 
@@ -188,6 +186,7 @@ def conflator(
     distance_threshold: int = 5,
     coverage_threshold: int = 70,
 ):
+    conflation_schema()
     convert_to_point(input_table, output_table, unique_id)
     point_to_base_layer(base_layer, output_table, distance_threshold)
     point_count(output_table, distance_threshold)
@@ -210,8 +209,6 @@ def conflator(
     db.execute(query)
 
 if __name__ == "__main__":
-    conflation_schema()
-
     # nj_transit routes, possible coverage >=80
     conflator("nj_transit_routes", "njt", "uid", "nj_centerline", "b.line", 8, 80)
 
