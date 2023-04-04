@@ -3,9 +3,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-db = Database.from_config("mercer", "omad")
-gis_db = Database.from_config("gis", "gis")
-
 
 def conflation_schema():
     query = """
@@ -151,19 +148,34 @@ def conflate_to_base(output_table: str, distance_threshold: int, baselayer: str)
 
 
 def conflator(
+    db: str,
+    db_config_name: str,
+    input_table: str,
+    output_table: str,
+    unique_id: str,
+    base_layer: str,
+    column: str = "b.*",
+    distance_threshold: int = 5,
+    coverage_threshold: int = 70,
+):
     """
     Conflates an input table to a base layer.
 
-    Generates both a conflated and rejoined schema. Rejoined contains all data, 
+    Generates both a conflated and rejoined schema. Rejoined contains all data,
     Conflated is raw geoms conflated, rejoined connects to rest of data.
 
     Parameters
     --------------
+    db: str
+        the actual name of the database you're creating. must have postgis enabled
+    db_config_name: str
+        pgetl config file name of db, whatever is in brackets in
+        ~/.pg-data-etl/database_connections.cfg
     input_table : str
         the table you'd like to conflate to a base network
     output_table: str
         the name of your desired output. sql tablename conventions apply
-    unique_id: str 
+    unique_id: str
         a unique identifier in your input table
     base_layer: str
         the network you're conflating to (needs to exist in the db or in a FDW)
@@ -175,17 +187,11 @@ def conflator(
     coverage_threshold: int
         the percentage of coverage needed to perform the conflation.
         coverage is based on distance_threshold buffer, not on
-        actual line overlap.  
+        actual line overlap.
 
     """
-    input_table: str,
-    output_table: str,
-    unique_id: str,
-    base_layer: str,
-    column: str = 'b.*',
-    distance_threshold: int = 5,
-    coverage_threshold: int = 70,
-):
+
+    db = Database.from_config(db, db_config_name)
     conflation_schema()
     convert_to_point(input_table, output_table, unique_id)
     point_to_base_layer(base_layer, output_table, distance_threshold)
@@ -207,8 +213,3 @@ def conflator(
             where a.possible_coverage > {coverage_threshold}"""
     print(f"conflating {input_table} to {base_layer}")
     db.execute(query)
-
-if __name__ == "__main__":
-    # nj_transit routes, possible coverage >=80
-    conflator("nj_transit_routes", "njt", "uid", "nj_centerline", "b.line", 8, 80)
-

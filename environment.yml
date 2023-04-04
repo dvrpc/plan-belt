@@ -3,7 +3,9 @@ channels:
   - conda-forge
 dependencies:
   - black
+  - click
   - pandas
+  - geopandas
   - requests
   - sqlalchemy
   - psycopg2
@@ -14,4 +16,5 @@ dependencies:
   - pip
   - pip:
       - git+https://github.com/mmorley0395/pg-data-etl
+      - --editable .
 prefix: /home/mmorley0395/miniconda3/envs/planbelt
