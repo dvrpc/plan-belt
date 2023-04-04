@@ -153,11 +153,38 @@ def conflate_to_base(output_table: str, distance_threshold: int, baselayer: str)
 
 
 def conflator(
+    """
+    Conflates an input table to a base layer.
+
+    Generates both a conflated and rejoined schema. Rejoined contains all data, 
+    Conflated is raw geoms conflated, rejoined connects to rest of data.
+
+    Parameters
+    --------------
+    input_table : str
+        the table you'd like to conflate to a base network
+    output_table: str
+        the name of your desired output. sql tablename conventions apply
+    unique_id: str 
+        a unique identifier in your input table
+    base_layer: str
+        the network you're conflating to (needs to exist in the db or in a FDW)
+    column: str
+        the columns you'd like to include with conflation. default is all.
+    distance_threshold: int
+        how far to venture when searching for nearby layers to conflate. defaults
+        are in meters.
+    coverage_threshold: int
+        the percentage of coverage needed to perform the conflation.
+        coverage is based on distance_threshold buffer, not on
+        actual line overlap.  
+
+    """
     input_table: str,
     output_table: str,
     unique_id: str,
     base_layer: str,
-    column: str,
+    column: str = 'b.*',
     distance_threshold: int = 5,
     coverage_threshold: int = 70,
 ):
