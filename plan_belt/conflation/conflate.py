@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def conflation_schema():
+def conflation_schema(db: str):
     query = """
         create schema if not exists tmp;
         create schema if not exists conflated;
@@ -12,7 +12,7 @@ def conflation_schema():
     db.execute(query)
 
 
-def convert_to_point(input_table: str, output_table: str, unique_id: str):
+def convert_to_point(db: str, input_table: str, output_table: str, unique_id: str):
     # converts line layer to be conflated to point using st_interpolate point
     query = f"""drop table if exists tmp.{output_table}_pt;
                 create table tmp.{output_table}_pt as
@@ -32,7 +32,7 @@ def convert_to_point(input_table: str, output_table: str, unique_id: str):
     db.execute(query)
 
 
-def point_to_base_layer(baselayer: str, output_table: str, distance_threshold: int):
+def point_to_base_layer(db: str, baselayer: str, output_table: str, distance_threshold: int):
     # selects points that are within threshold distance from base layer (i.e. layer you're conflating to)
     query = f"""drop table if exists tmp.{output_table}_point_to_base;
                 create table tmp.{output_table}_point_to_base as
@@ -55,7 +55,7 @@ def point_to_base_layer(baselayer: str, output_table: str, distance_threshold: i
     db.execute(query)
 
 
-def point_count(output_table: str, distance_threshold: int):
+def point_count(db: str, output_table: str, distance_threshold: int):
     # counts the number of records that are within distance threshold of base layer
     query = f"""drop table if exists tmp.{output_table}_point{distance_threshold}_count;
             create table tmp.{output_table}_point{distance_threshold}_count as
@@ -72,7 +72,7 @@ def point_count(output_table: str, distance_threshold: int):
     db.execute(query)
 
 
-def total_point_count(output_table: str):
+def total_point_count(db: str, output_table: str):
     # counts total points in line layer
     query = f"""drop table if exists tmp.{output_table}_total_point_count;
                 create table tmp.{output_table}_total_point_count as
@@ -87,7 +87,7 @@ def total_point_count(output_table: str):
     db.execute(query)
 
 
-def most_occuring_in_threshold(output_table: str, distance_threshold: int):
+def most_occuring_in_threshold(db: str, output_table: str, distance_threshold: int):
     # finds percent match of points within distance threshold vs total points
     query = f"""drop table if exists tmp.{output_table}point{distance_threshold}_most_occurring;
                 create table tmp.{output_table}point{distance_threshold}_most_occurring as
@@ -116,7 +116,7 @@ def most_occuring_in_threshold(output_table: str, distance_threshold: int):
     db.execute(query)
 
 
-def conflate_to_base(output_table: str, distance_threshold: int, baselayer: str):
+def conflate_to_base(db: str, output_table: str, distance_threshold: int, baselayer: str):
     # finds percent match of points within distance threshold vs total points
     query = f"""drop table if exists conflated.{output_table}_to_{baselayer};
                 create table conflated.{output_table}_to_{baselayer} as
@@ -152,7 +152,8 @@ def conflator(
     db_config_name: str,
     input_table: str,
     output_table: str,
-    unique_id: str,
+    unique_id_a: str,
+    unique_id_b: str,
     base_layer: str,
     column: str = "b.*",
     distance_threshold: int = 5,
@@ -175,8 +176,10 @@ def conflator(
         the table you'd like to conflate to a base network
     output_table: str
         the name of your desired output. sql tablename conventions apply
-    unique_id: str
+    unique_id_a: str
         a unique identifier in your input table
+    unique_id_b: str
+        a unique identifier in your base layer
     base_layer: str
         the network you're conflating to (needs to exist in the db or in a FDW)
     column: str
@@ -192,13 +195,13 @@ def conflator(
     """
 
     db = Database.from_config(db, db_config_name)
-    conflation_schema()
-    convert_to_point(input_table, output_table, unique_id)
-    point_to_base_layer(base_layer, output_table, distance_threshold)
-    point_count(output_table, distance_threshold)
-    total_point_count(output_table)
-    most_occuring_in_threshold(output_table, distance_threshold)
-    conflate_to_base(output_table, distance_threshold, base_layer)
+    conflation_schema(db)
+    convert_to_point(db, input_table, output_table, unique_id_a)
+    point_to_base_layer(db, base_layer, output_table, distance_threshold)
+    point_count(db, output_table, distance_threshold)
+    total_point_count(db, output_table)
+    most_occuring_in_threshold(db, output_table, distance_threshold)
+    conflate_to_base(db, output_table, distance_threshold, base_layer)
 
     # necessary to rejoin the conflated geometry back to the id of the original geometry. might be a better way to do this
     query = f"""
@@ -209,7 +212,7 @@ def conflator(
                 {column}
             from conflated.{output_table}_to_{base_layer} a
             inner join public.{input_table} b
-            on a.{output_table}_id = b.uid
+            on a.{output_table}_id = b.{unique_id_b}
             where a.possible_coverage > {coverage_threshold}"""
     print(f"conflating {input_table} to {base_layer}")
     db.execute(query)
