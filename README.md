@@ -1,6 +1,9 @@
 # plan-belt
 A (WIP) collection of tools for planners. More to come.
-
+modules included at the moment:
+census: wrapper for census ACS api. 
+conflation: conflate a line layer to a base layer
+(in-progress) isochrones: generate travel time isochrones from a point or segment
 
 ## CLIs
 ### conflate: a command line interface (cli) for conflation. 
