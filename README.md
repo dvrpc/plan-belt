@@ -14,7 +14,7 @@ A (WIP) collection of tools for planners. More to come.
 for help and explanation of params:
 ```conflate conflation --help``` 
 example query
-```conflate conflation --distance_threshold=5 --coverage_threshold=75 --db=test --db_config_name=localhost --input_table=circuittrails --output_table=circuit  --unique_id_a=objectid --unique_id_b=objectid  --base_layer=rail --column=b.circuit```
+```conflate --distance_threshold=5 --coverage_threshold=75 --db=test --db_config_name=localhost --input_table=circuittrails --output_table=circuit  --unique_id_a=objectid --unique_id_b=objectid  --base_layer=rail --column=b.circuit```
 
 db configuration is all done through pg-data-etl, where you save database connection params. 
 
