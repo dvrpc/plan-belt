@@ -20,14 +20,14 @@ def main():
 @main.command()
 @click.option('--distance_threshold', default=5, help='distance threshold of conflation')
 @click.option('--coverage_threshold', default=75, help='acceptable percent coverage for conflation')
-@click.option('--db', help='db name in postgres')
-@click.option('--db_config_name', help='bracketed name in pg-data-etl config file')
-@click.option('--input_table', help='input table name')
-@click.option('--output_table', help='desired output table name. sql conventions apply')
-@click.option('--unique_id_a', help='unique identifier field for input table')
-@click.option('--unique_id_b', help='unique identifier field for base table')
-@click.option('--base_layer', help='base layer to conflate to')
-@click.option('--column', help='columns to include')
+@click.option('--db', required=True, help='database name in postgres')
+@click.option('--db_config_name', required=True, help='bracketed name in pg-data-etl config file')
+@click.option('--input_table', required=True, help='input table name, what you want to conflate')
+@click.option('--output_table', required=True, help='desired output table name. sql conventions apply')
+@click.option('--unique_id_a', required=True, help='unique identifier field for input table')
+@click.option('--unique_id_b', required=True, help='unique identifier field for base table')
+@click.option('--base_layer', required=True, help='base layer, the layer you want to conflate to')
+@click.option('--column', required=True, help='columns to include')
 def conflation(
     distance_threshold,
     coverage_threshold,
