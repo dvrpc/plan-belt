@@ -9,6 +9,10 @@ setup(
         "Click",
     ],
     entry_points={
-        "console_scripts": ["conflate = plan_belt.cli:conflation"],
+        "console_scripts": [
+            "conflate = plan_belt.cli:conflation",
+            "synchrosum = plan_belt.cli:synchro",
+            "synchrosim = plan_belt.cli:sim",
+        ]
     },
 )

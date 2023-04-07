@@ -6,6 +6,9 @@ dependencies:
   - click
   - pandas
   - pre-commit
+  - ca-certificates
+  - openssl
+  - xlsxwriter
   - geopandas
   - requests
   - sqlalchemy
