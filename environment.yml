@@ -1,10 +1,11 @@
-name: planbelt 
+name: planbelt
 channels:
   - conda-forge
 dependencies:
   - black
   - click
   - pandas
+  - pre-commit
   - geopandas
   - requests
   - sqlalchemy
