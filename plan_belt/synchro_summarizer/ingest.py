@@ -9,6 +9,8 @@ class SynchroTxt:
     """
     Class to summarize and handle Synchro text files
 
+    Todo: build handler for multiple page / intersection files
+
     """
 
     def __init__(self, filepath: Path) -> None:
