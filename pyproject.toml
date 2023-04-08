@@ -6,3 +6,4 @@ version_files = [
 ]
 version = "0.1.1"
 tag_format = "$major.$minor.$patch$prerelease"
+# try bumping before push?
