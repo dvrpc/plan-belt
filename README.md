@@ -4,7 +4,7 @@ modules included at the moment:
 * census: wrapper for census ACS api.
 * conflation: conflate a line layer to a base layer
 * (in-progress) isochrones: generate travel time isochrones from a point or segment
-* (in-progress) synchrosimsum: scrapes synchro/simtraffic pdfs/txt files and produces summary.
+* synchrosimsum: scrapes synchro/simtraffic pdfs/txt files and produces summary.
 
 ## CLIs
 ### conflate: a command line interface (cli) for conflation.
