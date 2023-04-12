@@ -6,3 +6,4 @@ version_files = [
 ]
 version = "0.1.0"
 tag_format = "$major.$minor.$patch$prerelease"
+changelog_incremental = true
