@@ -32,7 +32,9 @@ def convert_to_point(db: str, input_table: str, output_table: str, unique_id: st
     db.execute(query)
 
 
-def point_to_base_layer(db: str, baselayer: str, output_table: str, distance_threshold: int):
+def point_to_base_layer(
+    db: str, baselayer: str, output_table: str, distance_threshold: int
+):
     # selects points that are within threshold distance from base layer (i.e. layer you're conflating to)
     query = f"""drop table if exists tmp.{output_table}_point_to_base;
                 create table tmp.{output_table}_point_to_base as
@@ -116,7 +118,9 @@ def most_occuring_in_threshold(db: str, output_table: str, distance_threshold: i
     db.execute(query)
 
 
-def conflate_to_base(db: str, output_table: str, distance_threshold: int, baselayer: str):
+def conflate_to_base(
+    db: str, output_table: str, distance_threshold: int, baselayer: str
+):
     # finds percent match of points within distance threshold vs total points
     query = f"""drop table if exists conflated.{output_table}_to_{baselayer};
                 create table conflated.{output_table}_to_{baselayer} as
