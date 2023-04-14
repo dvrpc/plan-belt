@@ -38,3 +38,6 @@ this is all abstracted into a similar command:
 ```synchrosim '{filepath}.pdf'```
 
 this command produces a similar summary, called 'sim_summary.xlsx' in the same directory.
+
+todo:
+add isochrones function, modularize
