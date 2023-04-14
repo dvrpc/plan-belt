@@ -4,5 +4,5 @@ version_files = [
     "pyproject.toml:version",
     "setup.py:version"
 ]
-version = "0.1.0"
+version = "0.1.1"
 tag_format = "$major.$minor.$patch$prerelease"
