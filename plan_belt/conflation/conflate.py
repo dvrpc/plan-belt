@@ -12,13 +12,18 @@ def conflation_schema(db: str):
     db.execute(query)
 
 
-def convert_to_point(db: str, input_table: str, output_table: str, unique_id: str):
+def convert_to_point(
+    db: str,
+    input_table: str,
+    output_table: str,
+    unique_id_a: str,
+):
     # converts line layer to be conflated to point using st_interpolate point
     query = f"""drop table if exists tmp.{output_table}_pt;
                 create table tmp.{output_table}_pt as
                 select
                     n,
-                    {unique_id} as id,
+                    {unique_id_a} as id,
                     ST_LineInterpolatePoint(
                         st_linemerge((st_dump(geom)).geom),
                     least(n *(4 / st_length(geom)), 1.0)
@@ -33,14 +38,18 @@ def convert_to_point(db: str, input_table: str, output_table: str, unique_id: st
 
 
 def point_to_base_layer(
-    db: str, baselayer: str, output_table: str, distance_threshold: int
+    db: str,
+    baselayer: str,
+    output_table: str,
+    distance_threshold: int,
+    unique_id_b: str,
 ):
     # selects points that are within threshold distance from base layer (i.e. layer you're conflating to)
     query = f"""drop table if exists tmp.{output_table}_point_to_base;
                 create table tmp.{output_table}_point_to_base as
                 select
                     a.id as {output_table}_id,
-                    b.globalid,
+                    b.{unique_id_b} as globalid,
                     a.geom
                 from
                     tmp.{output_table}_pt a,
@@ -200,7 +209,7 @@ def conflator(
 
     db = Database.from_config(db, db_config_name)
     conflation_schema(db)
-    convert_to_point(db, input_table, output_table, unique_id_a)
+    convert_to_point(db, input_table, output_table, unique_id_a, unique_id_b)
     point_to_base_layer(db, base_layer, output_table, distance_threshold)
     point_count(db, output_table, distance_threshold)
     total_point_count(db, output_table)
