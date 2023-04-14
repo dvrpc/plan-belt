@@ -1,3 +1,13 @@
+## 0.1.2 (2023-04-14)
+
+### Fix
+
+- changed yml config to body as a test
+- changed tag format to see if anything changes
+- removed release job to see if bump can work on its own
+- added additional changelog settings to pyproj toml
+- falsely adding this readme change as a fix to test incrementation
+
 ## 0.1.1 (2023-04-14)
 
 ### Fix
