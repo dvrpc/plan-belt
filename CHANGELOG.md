@@ -1,3 +1,10 @@
+## 0.1.3 (2023-04-14)
+
+### Fix
+
+- changed where permissions are in yml
+- whitespace but leaving as a fix to increment
+
 ## 0.1.2 (2023-04-14)
 
 ### Fix
