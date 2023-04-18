@@ -128,14 +128,18 @@ def most_occuring_in_threshold(db: str, output_table: str, distance_threshold: i
 
 
 def conflate_to_base(
-    db: str, output_table: str, distance_threshold: int, baselayer: str
+    db: str,
+    output_table: str,
+    distance_threshold: int,
+    baselayer: str,
+    unique_id_b: str,
 ):
     # finds percent match of points within distance threshold vs total points
     query = f"""drop table if exists conflated.{output_table}_to_{baselayer};
                 create table conflated.{output_table}_to_{baselayer} as
                 select
                     distinct on
-                    (a.globalid) a.*,
+                    (a.{unique_id_b}) a.*,
                     b.{output_table}_id,
                     b.pnt_{distance_threshold}_count,
                     b.{output_table}_total_point_count,
@@ -155,7 +159,7 @@ def conflate_to_base(
                 from
                     {baselayer} a
                 left join tmp.{output_table}point{distance_threshold}_most_occurring b on
-                    a.globalid = b.globalid;
+                    a.{unique_id_b}= b.globalid;
                             """
     db.execute(query)
 
@@ -214,7 +218,7 @@ def conflator(
     point_count(db, output_table, distance_threshold)
     total_point_count(db, output_table)
     most_occuring_in_threshold(db, output_table, distance_threshold)
-    conflate_to_base(db, output_table, distance_threshold, base_layer)
+    conflate_to_base(db, output_table, distance_threshold, base_layer, unique_id_b)
 
     # necessary to rejoin the conflated geometry back to the id of the original geometry. might be a better way to do this
     query = f"""
