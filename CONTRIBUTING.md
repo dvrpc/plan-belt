@@ -1,5 +1,5 @@
 # Contributing to planbelt
-Welcome! Planbelt is a collection of tools for planners and anyone else who might be interested. 
+Welcome! Planbelt is a collection of tools for planners and anyone else who might be interested.
 
 ## Setup
 
@@ -16,4 +16,3 @@ Planbelt uses conventional commits to automate version updates using semantic ve
 If you prefer not to use commitizen, that's totally fine, but there are still some hooks you'll need to install. With your conda environment activated, run:
 
 ```pre-commit install --hook-type commit-msg --hook-type pre-push```
-
