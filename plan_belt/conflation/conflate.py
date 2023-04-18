@@ -209,8 +209,8 @@ def conflator(
 
     db = Database.from_config(db, db_config_name)
     conflation_schema(db)
-    convert_to_point(db, input_table, output_table, unique_id_a, unique_id_b)
-    point_to_base_layer(db, base_layer, output_table, distance_threshold)
+    convert_to_point(db, input_table, output_table, unique_id_a)
+    point_to_base_layer(db, base_layer, output_table, distance_threshold, unique_id_b)
     point_count(db, output_table, distance_threshold)
     total_point_count(db, output_table)
     most_occuring_in_threshold(db, output_table, distance_threshold)
