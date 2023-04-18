@@ -1,3 +1,9 @@
+## 0.1.4 (2023-04-18)
+
+### Fix
+
+- move input id b to correct function
+
 ## 0.1.3 (2023-04-14)
 
 ### Fix
