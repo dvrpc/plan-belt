@@ -102,7 +102,7 @@ def synchro(text_file_path):
 @click.argument("pdf_file_path")
 def sim(pdf_file_path):
     """
-    Uses the SynchroTxt class to summarize text files from Synchro's output
+    Uses the SynchroSim class to summarize pdf files from Simtraffic's output
     """
 
     SynchroSim(pdf_file_path)
