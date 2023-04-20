@@ -221,6 +221,7 @@ class SynchroSim:
             df.to_excel(writer, sheet_name="summary", index=False)
             df.to_excel(writer, sheet_name="arterial_los", index=False)
             for key in dfs:
+                dfs[key] = dfs[key].transpose()
                 dfs[key].to_excel(
                     writer,
                     sheet_name=re.sub("[&: ]", "", key[16:]),
