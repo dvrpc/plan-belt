@@ -18,11 +18,25 @@ class SynchroTxt:
             self.filepath, header=None, names=range(30), delimiter="\t", engine="python"
         )
         self.whole_csv = self.whole_csv.dropna(axis=1, how="all")
+        self.project_name = str(self.whole_csv.at[0, 0])
+        self.startrows = self.whole_csv[
+            self.whole_csv[0] == self.project_name
+        ].index.tolist()
+        self.count = 0
+        for index in self.startrows:
+            print(self.startrows[self.count])
+            self.__create_df(index)
 
-        print(self.whole_csv)
-        # self.to_csv()
+    def __create_df(self, index):
+        try:
+            df = self.whole_csv[index : self.startrows[self.count + 1]]
+        except IndexError:
+            df = self.whole_csv[index:]
+        print(df)
+        self.count += 1
 
-    # def to_csv(self):
+        # def to_csv(self):
+
     #     with pd.ExcelWriter(self.dir / "synchro_summary.xlsx") as writer:
     #         self.summary.to_excel(writer, sheet_name="summary", index=True)
     #     return f"saved file to {dir}"
