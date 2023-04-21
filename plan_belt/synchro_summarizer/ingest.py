@@ -9,73 +9,23 @@ class SynchroTxt:
     """
     Class to summarize and handle Synchro text files
 
-    Todo: build handler for multiple page / intersection files
-
     """
 
     def __init__(self, filepath: Path) -> None:
         self.filepath = Path(filepath)
         self.dir = self.filepath.parent
-        self.metadf = pd.read_csv(
-            self.filepath, nrows=2, header=None, usecols=[0], delimiter="\t"
+        self.whole_csv = pd.read_csv(
+            self.filepath, header=None, names=range(30), delimiter="\t", engine="python"
         )
-        self.hcm_version = self.metadf.iloc[0, 0]
-        self.intersection_name = self.metadf.iloc[1, 0]
-        self.streets = self.intersection_name.split("&")
-        self.street_a = self.streets[0].split(":")[1]
-        self.street_b = self.streets[1]
-        self.df = pd.read_csv(self.filepath, skiprows=4, delimiter="\t")
-        self.column_names = [x.strip(" ") for x in self.df.columns.values.tolist()]
-        self.df.columns = self.column_names
-        self.scenario = self.df.iloc[43]["Movement"]
-        self.volume = self.df.loc[[1]]
-        self.vc_ratio = self.df.loc[[20]]
-        self.queue = self.df.loc[[27]]
-        self.ln_grp_delay = self.df.loc[[29]]
-        self.ln_grp_los = self.df.loc[[30]]
-        self.approach_delay = self.df.loc[[32]]
-        self.approach_los = self.df.loc[[33]]
-        self.intersection_control_delay = self.df.loc[[41]]
-        self.intersection_los = self.df.loc[[42]]
-        self.summary = pd.concat(
-            [
-                self.volume,
-                self.vc_ratio,
-                self.queue,
-                self.ln_grp_delay,
-                self.ln_grp_los,
-                self.approach_delay,
-                self.approach_los,
-                self.intersection_control_delay,
-                self.intersection_los,
-            ],
-            ignore_index=True,
-        )
-        self.summary = self.summary.drop("Unnamed: 1", axis=1)
-        self.summary = self.summary.transpose()
-        self.summary.columns = self.summary.iloc[0]
-        self.summary = self.summary[1:]
-        self.column_names = [x.strip(" ") for x in self.summary.columns.values.tolist()]
-        self.summary.columns = self.column_names
-        self.summary = self.summary.rename(
-            columns={"%ile BackOfQ(95%),veh/ln": "%ile BackOfQ(95%),feet"}
-        )
-        self.summary["%ile BackOfQ(95%),feet"] = self.summary[
-            "%ile BackOfQ(95%),feet"
-        ].apply(pd.to_numeric)
-        self.summary["%ile BackOfQ(95%),feet"] = (
-            self.summary["%ile BackOfQ(95%),feet"] * 25
-        )  # 25' per car instead of just car lengths
-        self.summary.index = pd.MultiIndex.from_arrays(
-            [self.summary.index.str[:2], self.summary.index.str[2:]]
-        )
-        self.summary = self.summary.rename_axis(("Direction", "Movement"))
-        self.to_csv()
+        self.whole_csv = self.whole_csv.dropna(axis=1, how="all")
 
-    def to_csv(self):
-        with pd.ExcelWriter(self.dir / "synchro_summary.xlsx") as writer:
-            self.summary.to_excel(writer, sheet_name="summary", index=True)
-        return f"saved file to {dir}"
+        print(self.whole_csv)
+        # self.to_csv()
+
+    # def to_csv(self):
+    #     with pd.ExcelWriter(self.dir / "synchro_summary.xlsx") as writer:
+    #         self.summary.to_excel(writer, sheet_name="summary", index=True)
+    #     return f"saved file to {dir}"
 
 
 class SynchroSim:
@@ -92,7 +42,8 @@ class SynchroSim:
         self.__create_txt()
         self.full_df = pd.read_csv(
             self.filepath.with_suffix(".txt"),
-            sep="\s{5,100}",  # if dfs aren't coming in right, tune the number on the left, which represents the minimum spaces used as separator
+            # if dfs aren't coming in right, tune the number on the left, which represents the minimum spaces used as separator
+            sep="\s{5,100}",
             engine="python",
             names=range(15),
         )
