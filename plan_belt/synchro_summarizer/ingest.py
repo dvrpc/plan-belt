@@ -24,7 +24,6 @@ class SynchroTxt:
         ].index.tolist()
         self.count = 0
         for index in self.startrows:
-            print(self.startrows[self.count])
             self.__create_df(index)
 
     def __create_df(self, index):
@@ -32,7 +31,9 @@ class SynchroTxt:
             df = self.whole_csv[index : self.startrows[self.count + 1]]
         except IndexError:
             df = self.whole_csv[index:]
-        print(df)
+        df = df.reset_index(drop=True)
+        intersection_name = df.iloc[1, 0]
+        print(intersection_name)
         self.count += 1
 
         # def to_csv(self):
