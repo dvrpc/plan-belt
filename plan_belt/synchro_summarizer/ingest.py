@@ -29,6 +29,12 @@ class SynchroTxt:
         print(self.dfs)
 
     def __create_df(self, index):
+        """Create a dataframe from specified startrows index
+
+        dfs are split by self.startrows attribute;
+        synchro report break point between tables is the project name
+        """
+
         try:
             df = self.whole_csv[index : self.startrows[self.count + 1]]
         except IndexError:
@@ -55,6 +61,8 @@ class SynchroTxt:
         return df, unique_name
 
     def __assemble_dfs(self):
+        """Assembles and cleans up dfs from report"""
+
         for index in self.startrows:
             df, unique_name = self.__create_df(index)
 
