@@ -26,7 +26,7 @@ class SynchroTxt:
         self.dfs = {}
         self.anomolies = {}
         self.__assemble_dfs()
-        print(self.anomolies)
+        print(self.dfs)
 
     def __create_df(self, index):
         try:
@@ -43,6 +43,12 @@ class SynchroTxt:
             df.columns = df.iloc[0]
             df = df[1:]
             self.dfs[unique_name] = df
+        elif df.iloc[2, 0].strip() == "Intersection":
+            df = df.iloc[4:]
+            df = df.reset_index(drop=True)
+            df.columns = df.iloc[0]
+            df = df[1:]
+            self.dfs[unique_name] = df
         else:
             self.anomolies[unique_name] = df
         self.count += 1
@@ -52,8 +58,9 @@ class SynchroTxt:
         for index in self.startrows:
             df, unique_name = self.__create_df(index)
 
-    # def __handle_anomolies(self):
-    #     """Handles differing report types/shapes"""
+    def __handle_anomolies(self):
+        """Handles differing report types/shapes"""
+        pass
 
 
 class SynchroSim:
