@@ -23,8 +23,10 @@ class SynchroTxt:
             self.whole_csv[0] == self.project_name
         ].index.tolist()
         self.count = 0
-        for index in self.startrows:
-            self.__create_df(index)
+        self.dfs = {}
+        self.anomolies = {}
+        self.__assemble_dfs()
+        print(self.anomolies)
 
     def __create_df(self, index):
         try:
@@ -33,14 +35,25 @@ class SynchroTxt:
             df = self.whole_csv[index:]
         df = df.reset_index(drop=True)
         intersection_name = df.iloc[1, 0]
-        print(intersection_name)
+        report_type = df.loc[(df.shape[0] - 2), 0]
+        unique_name = intersection_name + " " + report_type
+        if df.iloc[2, 0].strip() == "Movement":
+            df = df.iloc[2:]
+            df = df.reset_index(drop=True)
+            df.columns = df.iloc[0]
+            df = df[1:]
+            self.dfs[unique_name] = df
+        else:
+            self.anomolies[unique_name] = df
         self.count += 1
+        return df, unique_name
 
-        # def to_csv(self):
+    def __assemble_dfs(self):
+        for index in self.startrows:
+            df, unique_name = self.__create_df(index)
 
-    #     with pd.ExcelWriter(self.dir / "synchro_summary.xlsx") as writer:
-    #         self.summary.to_excel(writer, sheet_name="summary", index=True)
-    #     return f"saved file to {dir}"
+    # def __handle_anomolies(self):
+    #     """Handles differing report types/shapes"""
 
 
 class SynchroSim:
@@ -115,7 +128,7 @@ class SynchroSim:
             self.full_df[0].str.contains(f"{intersection_name}", na=False)
         ].index[0]
 
-        if is_duplicate == True:
+        if is_duplicate is True:
             intersection_index = intersection_index + 12
         else:
             pass
