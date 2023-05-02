@@ -48,13 +48,13 @@ class SynchroTxt:
             df = df.reset_index(drop=True)
             df.columns = df.iloc[0]
             df = df[1:]
-            self.dfs[unique_name] = df
+            df.columns = df.columns.str.rstrip()
         elif df.iloc[2, 0].strip() == "Intersection":
             df = df.iloc[4:]
             df = df.reset_index(drop=True)
             df.columns = df.iloc[0]
             df = df[1:]
-            self.dfs[unique_name] = df
+            df.columns = df.columns.str.rstrip()
         else:
             self.anomolies[unique_name] = df
         self.count += 1
@@ -65,6 +65,30 @@ class SynchroTxt:
 
         for index in self.startrows:
             df, unique_name = self.__create_df(index)
+            if unique_name in self.anomolies:
+                pass
+            elif "HCM Signalized Intersection Capacity Analysis" in unique_name:
+                pass
+            elif "HCM 6th Signalized Intersection Summary" in unique_name:
+                field_names = [
+                    "Movement",
+                    "Traffic Volume (veh/h)",
+                    "V/C Ratio(X)",
+                    "%ile BackOfQ(95%),veh/ln",
+                    "LnGrp Delay(d),s/veh",
+                    "LnGrp LOS",
+                    "Approach Delay, s/veh",
+                    "Approach LOS",
+                    "HCM 6th Ctrl Delay",
+                    "HCM 6th LOS",
+                ]
+                df.query(f"Movement.str.strip() in {field_names}", inplace=True)
+                self.dfs[unique_name] = df
+
+            elif "HCM Unsignalized Intersection Capacity Analysis" in unique_name:
+                pass
+            elif "HCM 6th TWSC" in unique_name:
+                pass
 
     def __handle_anomolies(self):
         """Handles differing report types/shapes"""
