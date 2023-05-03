@@ -74,7 +74,7 @@ class SynchroTxt:
                     "Movement",
                     "Traffic Volume (veh/h)",
                     "V/C Ratio(X)",
-                    "%ile BackOfQ(95%),veh/ln",
+                    "%ile BackOfQ(50%),veh/ln",
                     "LnGrp Delay(d),s/veh",
                     "LnGrp LOS",
                     "Approach Delay, s/veh",
@@ -83,7 +83,25 @@ class SynchroTxt:
                     "HCM 6th LOS",
                 ]
                 df.query(f"Movement.str.strip() in {field_names}", inplace=True)
-                df = df.reset_index()
+                df = df.reset_index(drop=True)
+                df = df.dropna(axis=1, how="all")
+                df["Movement"] = df["Movement"].str.strip()
+                df = df.transpose()
+                df.columns = df.iloc[0]
+                df = df[1:]
+                df = df.rename(
+                    columns={"%ile BackOfQ(50%),veh/ln": "%ile BackOfQ(50%),feet"}
+                )
+                df["%ile BackOfQ(50%),feet"] = df["%ile BackOfQ(50%),feet"].apply(
+                    pd.to_numeric
+                )
+                df["%ile BackOfQ(50%),feet"] = (
+                    df["%ile BackOfQ(50%),feet"] * 25
+                )  # 25' per car instead of just car lengths
+                df.index = pd.MultiIndex.from_arrays(
+                    [df.index.str[:2], df.index.str[2:]]
+                )
+                df = df.rename_axis(("Direction", "Movement"))
                 self.dfs[unique_name] = df
 
             elif "HCM Unsignalized Intersection Capacity Analysis" in unique_name:
