@@ -26,7 +26,6 @@ class SynchroTxt:
         self.dfs = {}
         self.anomolies = {}
         self.__assemble_dfs()
-        print(self.dfs)
         self.create_csv()
 
     def __create_df(self, index):
@@ -43,7 +42,7 @@ class SynchroTxt:
         df = df.reset_index(drop=True)
         intersection_name = df.iloc[1, 0]
         report_type = df.loc[(df.shape[0] - 2), 0]
-        unique_name = intersection_name + " " + report_type
+        unique_name = intersection_name + " " + "|" + report_type
         if df.iloc[2, 0].strip() == "Movement":
             df = df.iloc[2:]
             df = df.reset_index(drop=True)
@@ -56,9 +55,10 @@ class SynchroTxt:
             df.columns = df.iloc[0]
             df = df[1:]
             df.columns = df.columns.str.rstrip()
-        else:
-            print("anomoly added to self.anomolies")
+        elif "not" in df.iloc[2, 0].strip():
             self.anomolies[unique_name] = df
+        else:
+            print("what else could go wrong?")
         self.count += 1
         return df, unique_name
 
@@ -69,13 +69,12 @@ class SynchroTxt:
             df, unique_name = self.__create_df(index)
             if unique_name in self.anomolies:
                 pass
-            elif "HCM Signalized Intersection Capacity Analysis" in unique_name:
-                pass
-                # self.dfs[unique_name] = df
-            elif "HCM 6th Signalized Intersection Summary" in unique_name:
+            else:
+                # add all values from any report type that you want reported
                 field_names = [
                     "Movement",
                     "Traffic Volume (veh/h)",
+                    "Traffic Vol, veh/h",
                     "V/C Ratio(X)",
                     "%ile BackOfQ(50%),veh/ln",
                     "LnGrp Delay(d),s/veh",
@@ -92,43 +91,40 @@ class SynchroTxt:
                 df = df.transpose()
                 df.columns = df.iloc[0]
                 df = df[1:]
-                df = df.rename(
-                    columns={"%ile BackOfQ(50%),veh/ln": "%ile BackOfQ(50%),feet"}
-                )
-                df["%ile BackOfQ(50%),feet"] = df["%ile BackOfQ(50%),feet"].apply(
-                    pd.to_numeric
-                )
-                df["%ile BackOfQ(50%),feet"] = (
-                    df["%ile BackOfQ(50%),feet"] * 25
-                )  # 25' per car instead of just car lengths
+                # df = df.rename(
+                #     columns={
+                #         "%ile BackOfQ(50%),veh/ln": "%ile BackOfQ(50%),feet"}
+                # )
+                # df["%ile BackOfQ(50%),feet"] = df["%ile BackOfQ(50%),feet"].apply(
+                #     pd.to_numeric
+                # )
+                # df["%ile BackOfQ(50%),feet"] = (
+                #     df["%ile BackOfQ(50%),feet"] * 25
+                # )  # 25' per car instead of just car lengths
                 df.index = pd.MultiIndex.from_arrays(
                     [df.index.str[:2], df.index.str[2:]]
                 )
                 df = df.rename_axis(("Direction", "Movement"))
                 self.dfs[unique_name] = df
 
-            elif "HCM Unsignalized Intersection Capacity Analysis" in unique_name:
-                pass
-                # self.dfs[unique_name] = df
-            elif "HCM 6th TWSC" in unique_name:
-                pass
-                # self.dfs[unique_name] = df
-
     def __handle_anomolies(self):
         """Handles differing report types/shapes"""
 
     def create_csv(self):
+        counter = 1
         with pd.ExcelWriter(self.dir / "synchro_sum.xlsx") as writer:
             for key in self.dfs:
-                self.dfs[key].to_excel(writer, sheet_name=key.split(":")[0], startrow=3)
+                counter_string = str(counter)
+                self.dfs[key].to_excel(writer, sheet_name=counter_string, startrow=2)
                 keyseries = pd.Series([key])
                 keyseries.to_excel(
                     writer,
-                    sheet_name=key.split(":")[0],
+                    sheet_name=(counter_string),
                     index=False,
                     header=False,
                     startrow=0,
                 )
+                counter += 1
 
 
 class SynchroSim:
