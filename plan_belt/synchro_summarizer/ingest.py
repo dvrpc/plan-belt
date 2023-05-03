@@ -27,6 +27,7 @@ class SynchroTxt:
         self.anomolies = {}
         self.__assemble_dfs()
         print(self.dfs)
+        self.create_csv()
 
     def __create_df(self, index):
         """Create a dataframe from specified startrows index
@@ -115,7 +116,19 @@ class SynchroTxt:
 
     def __handle_anomolies(self):
         """Handles differing report types/shapes"""
-        pass
+
+    def create_csv(self):
+        with pd.ExcelWriter(self.dir / "synchro_sum.xlsx") as writer:
+            for key in self.dfs:
+                self.dfs[key].to_excel(writer, sheet_name=key.split(":")[0], startrow=3)
+                keyseries = pd.Series([key])
+                keyseries.to_excel(
+                    writer,
+                    sheet_name=key.split(":")[0],
+                    index=False,
+                    header=False,
+                    startrow=0,
+                )
 
 
 class SynchroSim:
