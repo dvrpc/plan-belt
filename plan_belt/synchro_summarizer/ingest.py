@@ -83,6 +83,7 @@ class SynchroTxt:
                     "HCM 6th LOS",
                 ]
                 df.query(f"Movement.str.strip() in {field_names}", inplace=True)
+                df = df.reset_index()
                 self.dfs[unique_name] = df
 
             elif "HCM Unsignalized Intersection Capacity Analysis" in unique_name:
