@@ -56,6 +56,7 @@ class SynchroTxt:
             df = df[1:]
             df.columns = df.columns.str.rstrip()
         else:
+            print("anomoly added to self.anomolies")
             self.anomolies[unique_name] = df
         self.count += 1
         return df, unique_name
@@ -69,6 +70,7 @@ class SynchroTxt:
                 pass
             elif "HCM Signalized Intersection Capacity Analysis" in unique_name:
                 pass
+                # self.dfs[unique_name] = df
             elif "HCM 6th Signalized Intersection Summary" in unique_name:
                 field_names = [
                     "Movement",
@@ -106,8 +108,10 @@ class SynchroTxt:
 
             elif "HCM Unsignalized Intersection Capacity Analysis" in unique_name:
                 pass
+                # self.dfs[unique_name] = df
             elif "HCM 6th TWSC" in unique_name:
                 pass
+                # self.dfs[unique_name] = df
 
     def __handle_anomolies(self):
         """Handles differing report types/shapes"""
