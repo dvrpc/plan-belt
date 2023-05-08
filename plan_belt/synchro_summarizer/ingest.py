@@ -124,19 +124,32 @@ class SynchroTxt:
 
     def create_csv(self):
         counter = 1
+        df_shape_counter = 1
         with pd.ExcelWriter(self.dir / "synchro_sum.xlsx") as writer:
             for key in self.dfs:
                 counter_string = str(counter)
-                self.dfs[key].to_excel(writer, sheet_name=counter_string, startrow=2)
-                keyseries = pd.Series([key])
-                keyseries.to_excel(
-                    writer,
-                    sheet_name=(counter_string),
-                    index=False,
-                    header=False,
-                    startrow=0,
+                self.dfs[key].to_excel(
+                    writer, sheet_name="summary", startrow=df_shape_counter
                 )
+                self.dfs[key].to_excel(writer, sheet_name=counter_string, startrow=1)
+                keyseries = pd.Series([key])
+                iterators = [counter_string, "summary"]
+                for val in iterators:
+                    if val == counter_string:
+                        startrow = 0
+                    elif val == "summary":
+                        startrow = df_shape_counter - 1
+                    keyseries.to_excel(
+                        writer,
+                        sheet_name=(val),
+                        index=False,
+                        header=False,
+                        startrow=startrow,
+                    )
                 counter += 1
+                print(df_shape_counter)
+                print(self.dfs[key].shape[0])
+                df_shape_counter += self.dfs[key].shape[0] + 4
 
 
 class SynchroSim:
