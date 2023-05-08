@@ -97,16 +97,22 @@ class SynchroTxt:
                 df = df.transpose()
                 df.columns = df.iloc[0]
                 df = df[1:]
-                # df = df.rename(
-                #     columns={
-                #         "%ile BackOfQ(50%),veh/ln": "%ile BackOfQ(50%),feet"}
-                # )
-                # df["%ile BackOfQ(50%),feet"] = df["%ile BackOfQ(50%),feet"].apply(
-                #     pd.to_numeric
-                # )
-                # df["%ile BackOfQ(50%),feet"] = (
-                #     df["%ile BackOfQ(50%),feet"] * 25
-                # )  # 25' per car instead of just car lengths
+
+                # hcm 2000 sig and unsig don't have backofq
+                # TWSC might, but unsure. need kelsey thom check
+
+                if "HCM 6th Signalized Intersection Summary" in unique_name:
+                    df = df.rename(
+                        columns={"%ile BackOfQ(50%),veh/ln": "%ile BackOfQ(50%),feet"}
+                    )
+                    df["%ile BackOfQ(50%),feet"] = df["%ile BackOfQ(50%),feet"].apply(
+                        pd.to_numeric
+                    )
+                    df["%ile BackOfQ(50%),feet"] = (
+                        df["%ile BackOfQ(50%),feet"] * 25
+                    )  # 25' per car instead of just car lengths
+                else:
+                    pass
                 df.index = pd.MultiIndex.from_arrays(
                     [df.index.str[:2], df.index.str[2:]]
                 )
