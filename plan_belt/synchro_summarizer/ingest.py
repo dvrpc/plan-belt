@@ -42,7 +42,7 @@ class SynchroTxt:
         df = df.reset_index(drop=True)
         intersection_name = df.iloc[1, 0]
         report_type = df.loc[(df.shape[0] - 2), 0]
-        unique_name = intersection_name + " " + "|" + report_type
+        unique_name = intersection_name + " " + "| " + report_type
         if df.iloc[2, 0].strip() == "Movement":
             df = df.iloc[2:]
             df = df.reset_index(drop=True)
@@ -76,13 +76,19 @@ class SynchroTxt:
                     "Traffic Volume (veh/h)",
                     "Traffic Vol, veh/h",
                     "V/C Ratio(X)",
+                    "v/c Ratio",
+                    "Volume to Capacity",
                     "%ile BackOfQ(50%),veh/ln",
+                    "Queue Length 95th (ft)",
                     "LnGrp Delay(d),s/veh",
                     "LnGrp LOS",
                     "Approach Delay, s/veh",
                     "Approach LOS",
                     "HCM 6th Ctrl Delay",
                     "HCM 6th LOS",
+                    "HCM 2000 Control Delay"
+                    "HCM 2000 Level of Service"  # note: this one might need to be
+                    # cleaned up, its not in first col
                 ]
                 df.query(f"Movement.str.strip() in {field_names}", inplace=True)
                 df = df.reset_index(drop=True)
