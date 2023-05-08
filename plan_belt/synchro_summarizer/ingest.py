@@ -147,8 +147,6 @@ class SynchroTxt:
                         startrow=startrow,
                     )
                 counter += 1
-                print(df_shape_counter)
-                print(self.dfs[key].shape[0])
                 df_shape_counter += self.dfs[key].shape[0] + 4
 
 
