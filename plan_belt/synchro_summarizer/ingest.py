@@ -113,8 +113,11 @@ class SynchroTxt:
                     df = self.__convert_queue(df, "%ile BackOfQ(50%),veh/ln")
                 elif "HCM 6th TWSC" in unique_name:
                     df = self.__convert_queue(df, "HCM 95th %tile Q(veh)")
+                elif "HCM Unsignalized Intersection Capacity Analysis" in unique_name:
+                    df = self.__convert_queue(df, "Queue Length 95th (ft)")
                 else:
                     pass
+                df = df.apply(pd.to_numeric, errors='ignore')
                 df.index = pd.MultiIndex.from_arrays(
                     [df.index.str[:2], df.index.str[2:]]
                 )
@@ -123,13 +126,15 @@ class SynchroTxt:
 
     def __convert_queue(self, df, column_name: str):
         """Converts queue from vehicle lengths to feet"""
-
-        df = df.rename(columns={f"{column_name}": "%ile BackOfQ,feet"})
-        df["%ile BackOfQ,feet"] = df["%ile BackOfQ,feet"].apply(pd.to_numeric)
-        df["%ile BackOfQ,feet"] = (
-            df["%ile BackOfQ,feet"] * 25
-        )  # 25' per car instead of just car lengths
-
+        percentile = re.findall(r'\d+', column_name)[0]
+        print(percentile)
+        df = df.rename(
+            columns={f"{column_name}": f"{percentile} %ile BackOfQ,feet"})
+        df[f"{percentile} %ile BackOfQ,feet"] = df[f"{percentile} %ile BackOfQ,feet"].apply(
+            pd.to_numeric)
+        df[f"{percentile} %ile BackOfQ,feet"] = (
+            df[f"{percentile} %ile BackOfQ,feet"] * 25
+        ).round()  # 25' per car instead of just car lengths
         return df
 
     def create_csv(self):
