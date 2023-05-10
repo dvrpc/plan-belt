@@ -127,7 +127,6 @@ class SynchroTxt:
     def __convert_queue(self, df, column_name: str):
         """Converts queue from vehicle lengths to feet"""
         percentile = re.findall(r'\d+', column_name)[0]
-        print(percentile)
         df = df.rename(
             columns={f"{column_name}": f"{percentile} %ile BackOfQ,feet"})
         df[f"{percentile} %ile BackOfQ,feet"] = df[f"{percentile} %ile BackOfQ,feet"].apply(
