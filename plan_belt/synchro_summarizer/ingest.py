@@ -126,6 +126,7 @@ class SynchroTxt:
 
     def __convert_queue(self, df, column_name: str):
         """Converts queue from vehicle lengths to feet"""
+
         percentile = re.findall(r'\d+', column_name)[0]
         df = df.rename(
             columns={f"{column_name}": f"{percentile} %ile BackOfQ,feet"})
@@ -137,6 +138,8 @@ class SynchroTxt:
         return df
 
     def create_csv(self):
+        """Creates a csv in the directory the files came from."""
+
         counter = 1
         df_shape_counter = 1
         with pd.ExcelWriter(self.dir / "synchro_sum.xlsx") as writer:
