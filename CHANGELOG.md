@@ -1,3 +1,28 @@
+## 0.2.0 (2023-05-10)
+
+### Feat
+
+- docstring changes and refactoring
+
+### Refactor
+
+- delete unneeded print
+- round queue lengths and properly pull 50th or 95th for column
+- added remainder of fields after feedback in field names gdoc from thom and kelsey
+- add convert queue function
+- remove unnecessary prints
+- add summary with correct keyname
+- readded queue length calc
+- still refactoring, adding fields
+- pulling dfs into csv working correctly
+- added / refactored csv function
+- transpose and queue length calcs working in hcm 6t
+- hcm 6th signalized summary df done
+- added handler for hcm 6th, which have different starting rows
+- break index of each df and variablize intersection names
+- dfs coming in correctly, now to summarize and cleanup
+- remove old cli
+
 ## 0.1.5 (2023-04-18)
 
 ### Fix
