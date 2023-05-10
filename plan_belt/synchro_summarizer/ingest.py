@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from pathlib import Path
 import subprocess
 import openpyxl
@@ -67,6 +68,7 @@ class SynchroTxt:
 
         for index in self.startrows:
             df, unique_name = self.__create_df(index)
+            df = df.replace("-", np.NaN)
             if unique_name in self.anomolies:
                 pass
             else:
@@ -77,9 +79,11 @@ class SynchroTxt:
                     "Traffic Vol, veh/h",
                     "V/C Ratio(X)",
                     "v/c Ratio",
+                    "HCM Lane V/C Ratio",
                     "Volume to Capacity",
                     "%ile BackOfQ(50%),veh/ln",
                     "Queue Length 95th (ft)",
+                    "HCM 95th %tile Q(veh)",
                     "LnGrp Delay(d),s/veh",
                     "LnGrp LOS",
                     "Approach Delay, s/veh",
@@ -97,20 +101,10 @@ class SynchroTxt:
                 df = df.transpose()
                 df.columns = df.iloc[0]
                 df = df[1:]
-
-                # hcm 2000 sig and unsig don't have backofq
-                # TWSC might, but unsure. need kelsey thom check
-
                 if "HCM 6th Signalized Intersection Summary" in unique_name:
-                    df = df.rename(
-                        columns={"%ile BackOfQ(50%),veh/ln": "%ile BackOfQ(50%),feet"}
-                    )
-                    df["%ile BackOfQ(50%),feet"] = df["%ile BackOfQ(50%),feet"].apply(
-                        pd.to_numeric
-                    )
-                    df["%ile BackOfQ(50%),feet"] = (
-                        df["%ile BackOfQ(50%),feet"] * 25
-                    )  # 25' per car instead of just car lengths
+                    df = self.__convert_queue(df, "%ile BackOfQ(50%),veh/ln")
+                elif "HCM 6th TWSC" in unique_name:
+                    df = self.__convert_queue(df, "HCM 95th %tile Q(veh)")
                 else:
                     pass
                 df.index = pd.MultiIndex.from_arrays(
@@ -119,8 +113,16 @@ class SynchroTxt:
                 df = df.rename_axis(("Direction", "Movement"))
                 self.dfs[unique_name] = df
 
-    def __handle_anomolies(self):
-        """Handles differing report types/shapes"""
+    def __convert_queue(self, df, column_name: str):
+        """Converts queue from vehicle lengths to feet"""
+
+        df = df.rename(columns={f"{column_name}": "%ile BackOfQ,feet"})
+        df["%ile BackOfQ,feet"] = df["%ile BackOfQ,feet"].apply(pd.to_numeric)
+        df["%ile BackOfQ,feet"] = (
+            df["%ile BackOfQ,feet"] * 25
+        )  # 25' per car instead of just car lengths
+
+        return df
 
     def create_csv(self):
         counter = 1
