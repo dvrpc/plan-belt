@@ -75,6 +75,8 @@ class SynchroTxt:
                 # add all values from any report type that you want reported
                 field_names = [
                     "Movement",
+                    "Lane Configurations",
+                    "Lanes",
                     "Traffic Volume (veh/h)",
                     "Traffic Vol, veh/h",
                     "V/C Ratio(X)",
@@ -88,7 +90,6 @@ class SynchroTxt:
                     "Delay (s)",
                     "Control Delay (s)",
                     "HCM Control Delay (s)",
-                    "Control Delay (s)",
                     "Lane LOS"
                     "LnGrp LOS",
                     "Level of Service",
@@ -122,6 +123,12 @@ class SynchroTxt:
                     [df.index.str[:2], df.index.str[2:]]
                 )
                 df = df.rename_axis(("Direction", "Movement"))
+                df = df.rename(
+                    columns={"Lanes": "Lane Configurations",
+                             "LnGrp Delay(d),s/veh": "Delay (s)",
+                             "Control Delay (s)": "Delay (s)",
+                             "HCM Control Delay (s)": "Delay (s)"})
+                self.__delay_queue_cleanup(df)
                 self.dfs[unique_name] = df
 
     def __convert_queue(self, df, column_name: str):
@@ -136,6 +143,41 @@ class SynchroTxt:
             df[f"{percentile} %ile BackOfQ,feet"] * 25
         ).round()  # 25' per car instead of just car lengths
         return df
+
+    def __delay_queue_cleanup(self, df):
+        """
+        Reads the lane configuration and applies delay and queue lengths to adjacent
+        cells, as appropriate.
+
+        Used as a way to ensure that delay and queue length is applied to all relevant
+        cells in the final excel output
+        """
+        df_movement = df.index.levels[0]
+        for value in df_movement:
+            cross_section = df.xs(value).index.to_list()
+        for name, value in df.iterrows():
+            lane_config = value['Lane Configurations']
+            # queue = value['']
+            if lane_config == '0':
+                pass
+            elif re.findall('<.>', str(lane_config)):
+                self.__merge_maxes(df, name, cross_section)
+            elif re.findall('<.', str(lane_config)):
+                self.__merge_maxes(df, name, cross_section)
+            # elif re.findall('.>', str(lane_config)):
+            #     self.__merge_maxes(df, name, cross_section)
+            else:
+                # print('still working on these')
+                pass
+
+    def __merge_maxes(self, df, name, list: list):
+        max_delay = []
+        direction = name[0]
+        for item in list:
+            max_delay.append(df.at[(direction, item), 'Delay (s)'])
+            print(df.at[(direction, item), 'Delay (s)'])
+        for item in list:
+            df.at[(direction, item), 'Delay (s)'] = max(max_delay)
 
     def create_csv(self):
         """Creates a csv in the directory the files came from."""
