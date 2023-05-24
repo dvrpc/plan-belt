@@ -128,7 +128,6 @@ class SynchroTxt:
                              "LnGrp Delay(d),s/veh": "Delay (s)",
                              "Control Delay (s)": "Delay (s)",
                              "HCM Control Delay (s)": "Delay (s)"})
-                print(unique_name)
                 self.__delay_queue_cleanup(df)
                 self.dfs[unique_name] = df
 
@@ -154,8 +153,6 @@ class SynchroTxt:
         cells in the final excel output
         """
         df_movement = df.index.levels[0]
-        # for value in df_movement:
-        # cross_section = df.xs(value).index.to_list()
         for name, value in df.iterrows():
             lane_config = value['Lane Configurations']
             # queue = value['']
@@ -166,20 +163,31 @@ class SynchroTxt:
             elif lane_config == '1':
                 pass
             elif re.findall('<.>', str(lane_config)):
-                self.__merge_maxes(df, name, df_movement)
+                self.__merge_maxes(df, df_movement, lane_config)
             elif re.findall('<.', str(lane_config)):
-                self.__merge_maxes(df, name, df_movement)
+                self.__merge_maxes(df, df_movement, lane_config)
             elif re.findall('.>', str(lane_config)):
-                self.__merge_maxes(df, name, df_movement)
+                self.__merge_maxes(df, df_movement, lane_config)
             else:
                 print('anomoly detected - need to look at data')
                 print(name, value)
 
-    def __merge_maxes(self, df, name, idx):
-        print(idx)
+    def __merge_maxes(self, df, idx, lane_config: str):
         for value in idx:
             max_delay = []
             xs = df.xs(value).index.tolist()
+            if re.findall('<.>', str(lane_config)):
+                pass
+            elif re.findall('<.', str(lane_config)):
+                try:
+                    xs.remove('R')
+                except:
+                    print("couldn't except")
+            elif re.findall('.>', str(lane_config)):
+                try:
+                    xs.remove('L')
+                except:
+                    pass
             for x in xs:
                 max_delay.append(df.at[(value, x), 'Delay (s)'])
             for x in xs:
