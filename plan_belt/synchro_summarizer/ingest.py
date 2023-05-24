@@ -128,6 +128,7 @@ class SynchroTxt:
                              "LnGrp Delay(d),s/veh": "Delay (s)",
                              "Control Delay (s)": "Delay (s)",
                              "HCM Control Delay (s)": "Delay (s)"})
+                print(unique_name)
                 self.__delay_queue_cleanup(df)
                 self.dfs[unique_name] = df
 
@@ -153,35 +154,36 @@ class SynchroTxt:
         cells in the final excel output
         """
         df_movement = df.index.levels[0]
-        for value in df_movement:
-            cross_section = df.xs(value).index.to_list()
+        # for value in df_movement:
+        # cross_section = df.xs(value).index.to_list()
         for name, value in df.iterrows():
             lane_config = value['Lane Configurations']
             # queue = value['']
             if lane_config == '0':
                 pass
+            elif pd.isnull(lane_config):
+                pass
+            elif lane_config == '1':
+                pass
             elif re.findall('<.>', str(lane_config)):
-                self.__merge_maxes(df, name, cross_section)
+                self.__merge_maxes(df, name, df_movement)
             elif re.findall('<.', str(lane_config)):
-                pass
-                # self.__merge_maxes(df, name, cross_section)
-            # elif re.findall('.>', str(lane_config)):
-            #     self.__merge_maxes(df, name, cross_section)
+                self.__merge_maxes(df, name, df_movement)
+            elif re.findall('.>', str(lane_config)):
+                self.__merge_maxes(df, name, df_movement)
             else:
-                # print('still working on these')
-                pass
+                print('anomoly detected - need to look at data')
+                print(name, value)
 
-    def __merge_maxes(self, df, name, list: list):
-        max_delay = []
-        direction = name[0]
-        # df['Delay (s)'].fillna(0, inplace=True)
-        # df['Lane Configurations'].fillna(0, inplace=True)
-        for item in list:
-            max_delay.append(df.at[(direction, item), 'Delay (s)'])
-        for item in list:
-            print(max(max_delay), direction, item)
-            df.at[(direction, item), 'Delay (s)'] = max(max_delay)
-        # return direction
+    def __merge_maxes(self, df, name, idx):
+        print(idx)
+        for value in idx:
+            max_delay = []
+            xs = df.xs(value).index.tolist()
+            for x in xs:
+                max_delay.append(df.at[(value, x), 'Delay (s)'])
+            for x in xs:
+                df.at[(value, x), 'Delay (s)'] = max(max_delay)
 
     def create_csv(self):
         """Creates a csv in the directory the files came from."""
