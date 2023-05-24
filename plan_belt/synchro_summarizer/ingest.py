@@ -163,7 +163,8 @@ class SynchroTxt:
             elif re.findall('<.>', str(lane_config)):
                 self.__merge_maxes(df, name, cross_section)
             elif re.findall('<.', str(lane_config)):
-                self.__merge_maxes(df, name, cross_section)
+                pass
+                # self.__merge_maxes(df, name, cross_section)
             # elif re.findall('.>', str(lane_config)):
             #     self.__merge_maxes(df, name, cross_section)
             else:
@@ -173,11 +174,14 @@ class SynchroTxt:
     def __merge_maxes(self, df, name, list: list):
         max_delay = []
         direction = name[0]
+        # df['Delay (s)'].fillna(0, inplace=True)
+        # df['Lane Configurations'].fillna(0, inplace=True)
         for item in list:
             max_delay.append(df.at[(direction, item), 'Delay (s)'])
-            print(df.at[(direction, item), 'Delay (s)'])
         for item in list:
+            print(max(max_delay), direction, item)
             df.at[(direction, item), 'Delay (s)'] = max(max_delay)
+        # return direction
 
     def create_csv(self):
         """Creates a csv in the directory the files came from."""
