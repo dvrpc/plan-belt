@@ -1,3 +1,17 @@
+## 0.3.0 (2023-05-25)
+
+### Feat
+
+- add direction handler, subsequent patches will add other two cases
+
+### Fix
+
+- queue length properly populating
+- delay properly calculated and assigned
+- delay loosely working but need to iron out a few bugs
+- partially working, but doesnt yet properly apply to only arrow cells
+- creating a save point where through merging still works
+
 ## 0.2.0 (2023-05-10)
 
 ### Feat
