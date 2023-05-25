@@ -128,7 +128,6 @@ class SynchroTxt:
                              "LnGrp Delay(d),s/veh": "Delay (s)",
                              "Control Delay (s)": "Delay (s)",
                              "HCM Control Delay (s)": "Delay (s)"})
-                print(unique_name)
                 self.__delay_queue_cleanup(df)
                 self.dfs[unique_name] = df
 
@@ -154,14 +153,24 @@ class SynchroTxt:
         cells in the final excel output
         """
         df_movement = df.index.levels[0]
+        cols = df.columns.to_list()
+        queue_match = re.compile("....ile BackOfQ,feet")
+        match = [string for string in cols if re.match(queue_match, string)]
+
         for value in df_movement:
             max_delay = []
+            max_queue = []
             xs = df.xs(value).index.tolist()
             for x in xs:
                 if df.at[(value, x), 'Lane Configurations'] == '1':
                     pass  # max delay not needed if its its own lane w/o a shared mvmt
                 else:
                     max_delay.append(df.at[(value, x), 'Delay (s)'])
+                    if len(match) == 1:
+                        max_queue.append(df.at[(value, x), match[0]])
+                        print(max_queue)
+                    else:
+                        pass
             for x in xs:
                 if df.at[(value, x), 'Lane Configurations'] == '0':
                     pass
@@ -172,18 +181,30 @@ class SynchroTxt:
                 elif re.findall('<.>', str(df.at[(value, x), 'Lane Configurations'])):
                     for x in xs:
                         df.at[(value, x), 'Delay (s)'] = max(max_delay)
+                        try:
+                            df.at[(value, x), match[0]] = max(max_queue)
+                        except:
+                            pass
                 elif re.findall('<.', str(df.at[(value, x), 'Lane Configurations'])):
                     for x in xs:
                         if x == 'R':
                             pass
                         else:
                             df.at[(value, x), 'Delay (s)'] = max(max_delay)
+                            try:
+                                df.at[(value, x), match[0]] = max(max_queue)
+                            except:
+                                pass
                 elif re.findall('.>', str(df.at[(value, x), 'Lane Configurations'])):
                     for x in xs:
                         if x == 'L':
                             pass
                         else:
                             df.at[(value, x), 'Delay (s)'] = max(max_delay)
+                            try:
+                                df.at[(value, x), match[0]] = max(max_queue)
+                            except:
+                                pass
 
     def create_csv(self):
         """Creates a csv in the directory the files came from."""
