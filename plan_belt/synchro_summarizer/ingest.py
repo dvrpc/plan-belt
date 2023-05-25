@@ -128,6 +128,7 @@ class SynchroTxt:
                              "LnGrp Delay(d),s/veh": "Delay (s)",
                              "Control Delay (s)": "Delay (s)",
                              "HCM Control Delay (s)": "Delay (s)"})
+                print(unique_name)
                 self.__delay_queue_cleanup(df)
                 self.dfs[unique_name] = df
 
@@ -153,45 +154,36 @@ class SynchroTxt:
         cells in the final excel output
         """
         df_movement = df.index.levels[0]
-        for name, value in df.iterrows():
-            lane_config = value['Lane Configurations']
-            # queue = value['']
-            if lane_config == '0':
-                pass
-            elif pd.isnull(lane_config):
-                pass
-            elif lane_config == '1':
-                pass
-            elif re.findall('<.>', str(lane_config)):
-                self.__merge_maxes(df, df_movement, lane_config)
-            elif re.findall('<.', str(lane_config)):
-                self.__merge_maxes(df, df_movement, lane_config)
-            elif re.findall('.>', str(lane_config)):
-                self.__merge_maxes(df, df_movement, lane_config)
-            else:
-                print('anomoly detected - need to look at data')
-                print(name, value)
-
-    def __merge_maxes(self, df, idx, lane_config: str):
-        for value in idx:
+        for value in df_movement:
             max_delay = []
             xs = df.xs(value).index.tolist()
-            if re.findall('<.>', str(lane_config)):
-                pass
-            elif re.findall('<.', str(lane_config)):
-                try:
-                    xs.remove('R')
-                except:
-                    print("couldn't except")
-            elif re.findall('.>', str(lane_config)):
-                try:
-                    xs.remove('L')
-                except:
+            for x in xs:
+                if df.at[(value, x), 'Lane Configurations'] == '1':
+                    pass  # max delay not needed if its its own lane w/o a shared mvmt
+                else:
+                    max_delay.append(df.at[(value, x), 'Delay (s)'])
+            for x in xs:
+                if df.at[(value, x), 'Lane Configurations'] == '0':
                     pass
-            for x in xs:
-                max_delay.append(df.at[(value, x), 'Delay (s)'])
-            for x in xs:
-                df.at[(value, x), 'Delay (s)'] = max(max_delay)
+                elif pd.isnull(df.at[(value, x), 'Lane Configurations']):
+                    pass
+                elif df.at[(value, x), 'Lane Configurations'] == '1':
+                    pass
+                elif re.findall('<.>', str(df.at[(value, x), 'Lane Configurations'])):
+                    for x in xs:
+                        df.at[(value, x), 'Delay (s)'] = max(max_delay)
+                elif re.findall('<.', str(df.at[(value, x), 'Lane Configurations'])):
+                    for x in xs:
+                        if x == 'R':
+                            pass
+                        else:
+                            df.at[(value, x), 'Delay (s)'] = max(max_delay)
+                elif re.findall('.>', str(df.at[(value, x), 'Lane Configurations'])):
+                    for x in xs:
+                        if x == 'L':
+                            pass
+                        else:
+                            df.at[(value, x), 'Delay (s)'] = max(max_delay)
 
     def create_csv(self):
         """Creates a csv in the directory the files came from."""
