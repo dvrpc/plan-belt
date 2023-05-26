@@ -12,7 +12,7 @@ class SynchroTxt:
 
     """
 
-    def __init__(self, filepath: Path) -> None:
+    def __init__(self, filepath: Path, simtraffic: Path = None) -> None:
         self.filepath = Path(filepath)
         self.dir = self.filepath.parent
         self.whole_csv = pd.read_csv(
@@ -27,6 +27,11 @@ class SynchroTxt:
         self.dfs = {}
         self.anomolies = {}
         self.__assemble_dfs()
+        if simtraffic is not None:
+            Path(simtraffic)
+            SynchroSim(simtraffic, "false")
+        else:
+            pass
         self.create_csv()
 
     def __create_df(self, index):
@@ -262,7 +267,7 @@ class SynchroSim:
 
     """
 
-    def __init__(self, filepath: Path, csv: bool) -> None:
+    def __init__(self, filepath: Path, csv: str) -> None:
         self.filepath = Path(filepath)
         self.dir = self.filepath.parent
         self.__create_txt()

@@ -81,12 +81,13 @@ def conflation(
 
 @main.command()
 @click.argument("text_file_path")
-def synchro(text_file_path):
+@click.argument("simtraffic_pdf_path", required=False)
+def synchro(text_file_path, simtraffic_pdf_path):
     """
     Uses the SynchroTxt class to summarize text files from Synchro's output
     """
 
-    SynchroTxt(text_file_path)
+    SynchroTxt(text_file_path, simtraffic_pdf_path)
 
 
 @main.command()
