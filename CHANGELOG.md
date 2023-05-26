@@ -1,3 +1,9 @@
+## 0.3.1 (2023-05-26)
+
+### Fix
+
+- additional handlers for no title, unexpected queue length percentage
+
 ## 0.3.0 (2023-05-25)
 
 ### Feat
