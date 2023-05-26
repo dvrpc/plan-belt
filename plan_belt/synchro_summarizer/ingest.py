@@ -35,14 +35,23 @@ class SynchroTxt:
         dfs are split by self.startrows attribute;
         synchro report break point between tables is the project name
         """
-
+        possible_report_types = [
+            'HCM Unsignalized Intersection Capacity Analysis',
+            'HCM 6th TWSC',
+            'HCM Signalized Intersection Capacity Analysis',
+            'HCM 6th Signalized Intersection Summary']
         try:
             df = self.whole_csv[index: self.startrows[self.count + 1]]
         except IndexError:
             df = self.whole_csv[index:]
         df = df.reset_index(drop=True)
         intersection_name = df.iloc[1, 0]
-        report_type = df.loc[(df.shape[0] - 2), 0]
+        if df.loc[(df.shape[0] - 2), 0] in possible_report_types:
+            report_type = df.loc[(df.shape[0] - 2), 0]
+        elif df.loc[0, 0] in possible_report_types:
+            report_type = df.loc[0, 0]
+        else:
+            print('Report type not in expected locations...')
         unique_name = intersection_name + " " + "| " + report_type
         if df.iloc[2, 0].strip() == "Movement":
             df = df.iloc[2:]
@@ -57,6 +66,8 @@ class SynchroTxt:
             df = df[1:]
             df.columns = df.columns.str.rstrip()
         elif "not" in df.iloc[2, 0].strip():
+            self.anomolies[unique_name] = df
+        elif "expects" in df.iloc[2, 0].strip():
             self.anomolies[unique_name] = df
         else:
             print("what else could go wrong?")
@@ -84,6 +95,7 @@ class SynchroTxt:
                     "HCM Lane V/C Ratio",
                     "Volume to Capacity",
                     "%ile BackOfQ(50%),veh/ln",
+                    "%ile BackOfQ(95%),veh/ln",
                     "Queue Length 95th (ft)",
                     "HCM 95th %tile Q(veh)",
                     "LnGrp Delay(d),s/veh",
@@ -111,7 +123,13 @@ class SynchroTxt:
                 df.columns = df.iloc[0]
                 df = df[1:]
                 if "HCM 6th Signalized Intersection Summary" in unique_name:
-                    df = self.__convert_queue(df, "%ile BackOfQ(50%),veh/ln")
+                    try:
+                        df = self.__convert_queue(
+                            df, "%ile BackOfQ(50%),veh/ln")
+                    except KeyError:
+                        df = self.__convert_queue(
+                            df, "%ile BackOfQ(95%),veh/ln")
+
                 elif "HCM 6th TWSC" in unique_name:
                     df = self.__convert_queue(df, "HCM 95th %tile Q(veh)")
                 elif "HCM Unsignalized Intersection Capacity Analysis" in unique_name:
@@ -168,7 +186,6 @@ class SynchroTxt:
                     max_delay.append(df.at[(value, x), 'Delay (s)'])
                     if len(match) == 1:
                         max_queue.append(df.at[(value, x), match[0]])
-                        print(max_queue)
                     else:
                         pass
             for x in xs:
