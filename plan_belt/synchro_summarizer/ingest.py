@@ -262,7 +262,7 @@ class SynchroSim:
 
     """
 
-    def __init__(self, filepath: Path) -> None:
+    def __init__(self, filepath: Path, csv: bool) -> None:
         self.filepath = Path(filepath)
         self.dir = self.filepath.parent
         self.__create_txt()
@@ -273,7 +273,12 @@ class SynchroSim:
             engine="python",
             names=range(15),
         )
-        self.create_csv()
+        if csv.lower() == "true":
+            self.create_csv()
+        elif csv.lower() == 'false':
+            self.return_queues_for_intersection()
+        else:
+            print("Must use true or false in the csv flag.")
 
     def __create_txt(self):
         """
@@ -394,6 +399,7 @@ class SynchroSim:
         return dfs
 
     def create_csv(self):
+        """Used when this an independent CSV summary is needed"""
         df = self.find_arterial_los()
         dfs = self.qb_report()
         shape = df.shape[0]
@@ -424,3 +430,8 @@ class SynchroSim:
                 )
                 shape2 = dfs[key].shape[0]
                 start_count += shape2 + 6
+
+    def return_queues_for_intersection(self):
+        df = self.find_arterial_los()
+        dfs = self.qb_report()
+        print(dfs)

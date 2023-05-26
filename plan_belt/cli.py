@@ -79,15 +79,6 @@ def conflation(
     )
 
 
-@click.group()
-def main():
-    """
-    synchro and simtraffic summarizers.
-    ingest outputs from synchro/simtraffic and bundle nicely.
-    """
-    pass
-
-
 @main.command()
 @click.argument("text_file_path")
 def synchro(text_file_path):
@@ -100,9 +91,10 @@ def synchro(text_file_path):
 
 @main.command()
 @click.argument("pdf_file_path")
-def sim(pdf_file_path):
+@click.argument("export_csv")
+def sim(pdf_file_path, export_csv):
     """
     Uses the SynchroSim class to summarize pdf files from Simtraffic's output
     """
 
-    SynchroSim(pdf_file_path)
+    SynchroSim(pdf_file_path, export_csv)
