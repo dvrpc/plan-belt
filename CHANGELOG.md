@@ -1,3 +1,15 @@
+## 0.4.0 (2023-06-05)
+
+### Feat
+
+- add function to combine simtraffic queues into synchro df, handles combined mvmts ie TR
+- added simtraffic flag in synchro so that simtraffic dfs can be returned and soon folded into synchro report
+
+### Fix
+
+- fix sim queue summary where there are multiple mvmts with same name
+- added csv flag to sim, to determine if to export csv or return dfs
+
 ## 0.3.1 (2023-05-26)
 
 ### Fix
