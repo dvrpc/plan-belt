@@ -275,14 +275,17 @@ class SynchroTxt:
 
         sim_df = sim_df.transpose()
         synchro_df['simtraffic_queue'] = None
+        direction_list = []
         for value in sim_df.index:
             if len(value[1]) == 1:
                 synchro_df.at[(value), 'simtraffic_queue'] = sim_df.at[(
-                    value)]['95th Queue (ft)'][0]
+                    value)]['95th Queue (ft)'].tolist()
             elif len(value[1]) == 2:
                 for char in value[1]:
-                    synchro_df.at[(value[0], char), 'simtraffic_queue'] = sim_df.at[(
-                        value)]['95th Queue (ft)'][0]
+                    breakout = (value[0], char)
+                    synchro_df.at[breakout, 'simtraffic_queue'] = sim_df.at[(
+                        value)]['95th Queue (ft)'].tolist()
+            direction_list.append(value)
         return synchro_df
 
 
