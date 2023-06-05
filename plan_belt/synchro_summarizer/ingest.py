@@ -12,7 +12,7 @@ class SynchroTxt:
 
     """
 
-    def __init__(self, filepath: Path) -> None:
+    def __init__(self, filepath: Path, simtraffic: Path = None) -> None:
         self.filepath = Path(filepath)
         self.dir = self.filepath.parent
         self.whole_csv = pd.read_csv(
@@ -26,7 +26,20 @@ class SynchroTxt:
         self.count = 0
         self.dfs = {}
         self.anomolies = {}
-        self.__assemble_dfs()
+        self.__assemble_dfs()  # populates self.dfs
+        if simtraffic is not None:
+            self.sim_dfs = SynchroSim(
+                Path(simtraffic), "false").return_queues_for_intersection()
+            for key in self.sim_dfs:
+                keynum = key.split(":")[1].strip()
+                for dfkey in self.dfs:
+                    dfkey_num = dfkey.split(":")[0]
+                    if dfkey_num == keynum:  # if intersection number is the same
+                        self.dfs[dfkey] = self.combine_synchro_sim(
+                            self.sim_dfs[key], self.dfs[dfkey])
+
+        else:
+            pass
         self.create_csv()
 
     def __create_df(self, index):
@@ -36,10 +49,11 @@ class SynchroTxt:
         synchro report break point between tables is the project name
         """
         possible_report_types = [
-            'HCM Unsignalized Intersection Capacity Analysis',
-            'HCM 6th TWSC',
-            'HCM Signalized Intersection Capacity Analysis',
-            'HCM 6th Signalized Intersection Summary']
+            "HCM Unsignalized Intersection Capacity Analysis",
+            "HCM 6th TWSC",
+            "HCM Signalized Intersection Capacity Analysis",
+            "HCM 6th Signalized Intersection Summary",
+        ]
         try:
             df = self.whole_csv[index: self.startrows[self.count + 1]]
         except IndexError:
@@ -51,7 +65,7 @@ class SynchroTxt:
         elif df.loc[0, 0] in possible_report_types:
             report_type = df.loc[0, 0]
         else:
-            print('Report type not in expected locations...')
+            print("Report type not in expected locations...")
         unique_name = intersection_name + " " + "| " + report_type
         if df.iloc[2, 0].strip() == "Movement":
             df = df.iloc[2:]
@@ -102,8 +116,7 @@ class SynchroTxt:
                     "Delay (s)",
                     "Control Delay (s)",
                     "HCM Control Delay (s)",
-                    "Lane LOS"
-                    "LnGrp LOS",
+                    "Lane LOS" "LnGrp LOS",
                     "Level of Service",
                     "HCM Lane LOS",
                     "Approach Delay, s/veh",
@@ -136,27 +149,31 @@ class SynchroTxt:
                     df = self.__convert_queue(df, "Queue Length 95th (ft)")
                 else:
                     pass
-                df = df.apply(pd.to_numeric, errors='ignore')
+                df = df.apply(pd.to_numeric, errors="ignore")
                 df.index = pd.MultiIndex.from_arrays(
                     [df.index.str[:2], df.index.str[2:]]
                 )
                 df = df.rename_axis(("Direction", "Movement"))
                 df = df.rename(
-                    columns={"Lanes": "Lane Configurations",
-                             "LnGrp Delay(d),s/veh": "Delay (s)",
-                             "Control Delay (s)": "Delay (s)",
-                             "HCM Control Delay (s)": "Delay (s)"})
+                    columns={
+                        "Lanes": "Lane Configurations",
+                        "LnGrp Delay(d),s/veh": "Delay (s)",
+                        "Control Delay (s)": "Delay (s)",
+                        "HCM Control Delay (s)": "Delay (s)",
+                    }
+                )
                 self.__delay_queue_cleanup(df)
                 self.dfs[unique_name] = df
 
     def __convert_queue(self, df, column_name: str):
         """Converts queue from vehicle lengths to feet"""
 
-        percentile = re.findall(r'\d+', column_name)[0]
+        percentile = re.findall(r"\d+", column_name)[0]
         df = df.rename(
             columns={f"{column_name}": f"{percentile} %ile BackOfQ,feet"})
-        df[f"{percentile} %ile BackOfQ,feet"] = df[f"{percentile} %ile BackOfQ,feet"].apply(
-            pd.to_numeric)
+        df[f"{percentile} %ile BackOfQ,feet"] = df[
+            f"{percentile} %ile BackOfQ,feet"
+        ].apply(pd.to_numeric)
         df[f"{percentile} %ile BackOfQ,feet"] = (
             df[f"{percentile} %ile BackOfQ,feet"] * 25
         ).round()  # 25' per car instead of just car lengths
@@ -180,44 +197,44 @@ class SynchroTxt:
             max_queue = []
             xs = df.xs(value).index.tolist()
             for x in xs:
-                if df.at[(value, x), 'Lane Configurations'] == '1':
+                if df.at[(value, x), "Lane Configurations"] == "1":
                     pass  # max delay not needed if its its own lane w/o a shared mvmt
                 else:
-                    max_delay.append(df.at[(value, x), 'Delay (s)'])
+                    max_delay.append(df.at[(value, x), "Delay (s)"])
                     if len(match) == 1:
                         max_queue.append(df.at[(value, x), match[0]])
                     else:
                         pass
             for x in xs:
-                if df.at[(value, x), 'Lane Configurations'] == '0':
+                if df.at[(value, x), "Lane Configurations"] == "0":
                     pass
-                elif pd.isnull(df.at[(value, x), 'Lane Configurations']):
+                elif pd.isnull(df.at[(value, x), "Lane Configurations"]):
                     pass
-                elif df.at[(value, x), 'Lane Configurations'] == '1':
+                elif df.at[(value, x), "Lane Configurations"] == "1":
                     pass
-                elif re.findall('<.>', str(df.at[(value, x), 'Lane Configurations'])):
+                elif re.findall("<.>", str(df.at[(value, x), "Lane Configurations"])):
                     for x in xs:
-                        df.at[(value, x), 'Delay (s)'] = max(max_delay)
+                        df.at[(value, x), "Delay (s)"] = max(max_delay)
                         try:
                             df.at[(value, x), match[0]] = max(max_queue)
                         except:
                             pass
-                elif re.findall('<.', str(df.at[(value, x), 'Lane Configurations'])):
+                elif re.findall("<.", str(df.at[(value, x), "Lane Configurations"])):
                     for x in xs:
-                        if x == 'R':
+                        if x == "R":
                             pass
                         else:
-                            df.at[(value, x), 'Delay (s)'] = max(max_delay)
+                            df.at[(value, x), "Delay (s)"] = max(max_delay)
                             try:
                                 df.at[(value, x), match[0]] = max(max_queue)
                             except:
                                 pass
-                elif re.findall('.>', str(df.at[(value, x), 'Lane Configurations'])):
+                elif re.findall(".>", str(df.at[(value, x), "Lane Configurations"])):
                     for x in xs:
-                        if x == 'L':
+                        if x == "L":
                             pass
                         else:
-                            df.at[(value, x), 'Delay (s)'] = max(max_delay)
+                            df.at[(value, x), "Delay (s)"] = max(max_delay)
                             try:
                                 df.at[(value, x), match[0]] = max(max_queue)
                             except:
@@ -253,6 +270,24 @@ class SynchroTxt:
                 counter += 1
                 df_shape_counter += self.dfs[key].shape[0] + 4
 
+    def combine_synchro_sim(self, sim_df, synchro_df):
+        """Does the actual heavy lifting of combining the dataframes"""
+
+        sim_df = sim_df.transpose()
+        synchro_df['simtraffic_queue'] = None
+        direction_list = []
+        for value in sim_df.index:
+            if len(value[1]) == 1:
+                synchro_df.at[(value), 'simtraffic_queue'] = sim_df.at[(
+                    value)]['95th Queue (ft)'].tolist()
+            elif len(value[1]) == 2:
+                for char in value[1]:
+                    breakout = (value[0], char)
+                    synchro_df.at[breakout, 'simtraffic_queue'] = sim_df.at[(
+                        value)]['95th Queue (ft)'].tolist()
+            direction_list.append(value)
+        return synchro_df
+
 
 class SynchroSim:
     """
@@ -262,7 +297,7 @@ class SynchroSim:
 
     """
 
-    def __init__(self, filepath: Path) -> None:
+    def __init__(self, filepath: Path, csv: str) -> None:
         self.filepath = Path(filepath)
         self.dir = self.filepath.parent
         self.__create_txt()
@@ -273,7 +308,12 @@ class SynchroSim:
             engine="python",
             names=range(15),
         )
-        self.create_csv()
+        if csv.lower() == "true":
+            self.create_csv()
+        elif csv.lower() == "false":
+            self.return_queues_for_intersection()
+        else:
+            print("Must use true or false in the csv flag.")
 
     def __create_txt(self):
         """
@@ -394,6 +434,7 @@ class SynchroSim:
         return dfs
 
     def create_csv(self):
+        """Used when this an independent CSV summary is needed"""
         df = self.find_arterial_los()
         dfs = self.qb_report()
         shape = df.shape[0]
@@ -424,3 +465,7 @@ class SynchroSim:
                 )
                 shape2 = dfs[key].shape[0]
                 start_count += shape2 + 6
+
+    def return_queues_for_intersection(self):
+        dfs = self.qb_report()
+        return dfs

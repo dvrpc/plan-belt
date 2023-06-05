@@ -39,5 +39,11 @@ this is all abstracted into a similar command:
 
 this command produces a similar summary, called 'sim_summary.xlsx' in the same directory.
 
+if you'd like to run both at once, and combine their results, simply call synchrosum, but add an additional argument for the simtraffic report.
+```synchrosum '{filepath}.txt' '{filepath}.pdf'```
+
+this calls both, but pipes the synchrosim output into a function which matches it and folds it into the synchrosum report.
+
 todo:
-add isochrones function, modularize
+* pull sim report into synchro output, probably need to fuzzymatch
+* deal with secondary headings in unsignalized reports, check others
