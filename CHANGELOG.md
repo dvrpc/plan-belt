@@ -1,3 +1,9 @@
+## 0.4.2 (2023-06-09)
+
+### Fix
+
+- return excel path for simsum
+
 ## 0.4.1 (2023-06-09)
 
 ### Fix
