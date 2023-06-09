@@ -1,3 +1,9 @@
+## 0.4.1 (2023-06-09)
+
+### Fix
+
+- add excel path so it is ingestible by synchrosumapi
+
 ## 0.4.0 (2023-06-05)
 
 ### Feat
