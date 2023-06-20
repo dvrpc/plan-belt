@@ -29,14 +29,16 @@ class SynchroTxt:
         self.__assemble_dfs()  # populates self.dfs
         if simtraffic is not None:
             self.sim_dfs = SynchroSim(
-                Path(simtraffic), "false").return_queues_for_intersection()
+                Path(simtraffic), "false"
+            ).return_queues_for_intersection()
             for key in self.sim_dfs:
                 keynum = key.split(":")[1].strip()
                 for dfkey in self.dfs:
                     dfkey_num = dfkey.split(":")[0]
                     if dfkey_num == keynum:  # if intersection number is the same
                         self.dfs[dfkey] = self.combine_synchro_sim(
-                            self.sim_dfs[key], self.dfs[dfkey])
+                            self.sim_dfs[key], self.dfs[dfkey]
+                        )
 
         else:
             pass
@@ -55,7 +57,7 @@ class SynchroTxt:
             "HCM 6th Signalized Intersection Summary",
         ]
         try:
-            df = self.whole_csv[index: self.startrows[self.count + 1]]
+            df = self.whole_csv[index : self.startrows[self.count + 1]]
         except IndexError:
             df = self.whole_csv[index:]
         df = df.reset_index(drop=True)
@@ -127,8 +129,7 @@ class SynchroTxt:
                     "HCM 2000 Level of Service"  # note: this one might need to be
                     # cleaned up, its not in first col
                 ]
-                df.query(
-                    f"Movement.str.strip() in {field_names}", inplace=True)
+                df.query(f"Movement.str.strip() in {field_names}", inplace=True)
                 df = df.reset_index(drop=True)
                 df = df.dropna(axis=1, how="all")
                 df["Movement"] = df["Movement"].str.strip()
@@ -137,11 +138,9 @@ class SynchroTxt:
                 df = df[1:]
                 if "HCM 6th Signalized Intersection Summary" in unique_name:
                     try:
-                        df = self.__convert_queue(
-                            df, "%ile BackOfQ(50%),veh/ln")
+                        df = self.__convert_queue(df, "%ile BackOfQ(50%),veh/ln")
                     except KeyError:
-                        df = self.__convert_queue(
-                            df, "%ile BackOfQ(95%),veh/ln")
+                        df = self.__convert_queue(df, "%ile BackOfQ(95%),veh/ln")
 
                 elif "HCM 6th TWSC" in unique_name:
                     df = self.__convert_queue(df, "HCM 95th %tile Q(veh)")
@@ -169,8 +168,7 @@ class SynchroTxt:
         """Converts queue from vehicle lengths to feet"""
 
         percentile = re.findall(r"\d+", column_name)[0]
-        df = df.rename(
-            columns={f"{column_name}": f"{percentile} %ile BackOfQ,feet"})
+        df = df.rename(columns={f"{column_name}": f"{percentile} %ile BackOfQ,feet"})
         df[f"{percentile} %ile BackOfQ,feet"] = df[
             f"{percentile} %ile BackOfQ,feet"
         ].apply(pd.to_numeric)
@@ -251,8 +249,7 @@ class SynchroTxt:
                 self.dfs[key].to_excel(
                     writer, sheet_name="summary", startrow=df_shape_counter
                 )
-                self.dfs[key].to_excel(
-                    writer, sheet_name=counter_string, startrow=1)
+                self.dfs[key].to_excel(writer, sheet_name=counter_string, startrow=1)
                 keyseries = pd.Series([key])
                 iterators = [counter_string, "summary"]
                 for val in iterators:
@@ -274,17 +271,19 @@ class SynchroTxt:
         """Does the actual heavy lifting of combining the dataframes"""
 
         sim_df = sim_df.transpose()
-        synchro_df['simtraffic_queue'] = None
+        synchro_df["simtraffic_queue"] = None
         direction_list = []
         for value in sim_df.index:
             if len(value[1]) == 1:
-                synchro_df.at[(value), 'simtraffic_queue'] = sim_df.at[(
-                    value)]['95th Queue (ft)'].tolist()
+                synchro_df.at[(value), "simtraffic_queue"] = sim_df.at[(value)][
+                    "95th Queue (ft)"
+                ].tolist()
             elif len(value[1]) == 2:
                 for char in value[1]:
                     breakout = (value[0], char)
-                    synchro_df.at[breakout, 'simtraffic_queue'] = sim_df.at[(
-                        value)]['95th Queue (ft)'].tolist()
+                    synchro_df.at[breakout, "simtraffic_queue"] = sim_df.at[(value)][
+                        "95th Queue (ft)"
+                    ].tolist()
             direction_list.append(value)
         return synchro_df
 
@@ -320,7 +319,7 @@ class SynchroSim:
         Uses subprocess module and pdftotext tool to turn simtraffic pdf to text file.
         """
         subprocess.run(
-            f"pdftotext -layout -colspacing 2 -nopgbrk '{self.filepath}'",
+            f"/usr/bin/pdftotext -layout -colspacing 2 -nopgbrk '{self.filepath}'",
             shell=True,
             check=True,
         )
@@ -340,8 +339,7 @@ class SynchroSim:
         headers = self.full_df[
             self.full_df[0].str.contains("Arterial Level of Service", na=False)
         ]
-        los_totals = self.full_df[self.full_df[0].str.contains(
-            "Total", na=False)]
+        los_totals = self.full_df[self.full_df[0].str.contains("Total", na=False)]
         los_totals = los_totals.drop([0], axis=1)
         headers = headers.dropna(axis="columns")
         headers = headers[headers[0] != "Arterial Level of Service"]
@@ -350,8 +348,7 @@ class SynchroSim:
             [headers.reset_index(drop=True), los_totals.reset_index(drop=True)], axis=1
         )
         arterial_los.columns = cols
-        arterial_los = arterial_los.drop(
-            ["dist (mi)", "arterial speed"], axis=1)
+        arterial_los = arterial_los.drop(["dist (mi)", "arterial speed"], axis=1)
         return arterial_los
 
     def qb_intersection(self, intersection_name: str, is_duplicate: bool):
@@ -374,7 +371,7 @@ class SynchroSim:
             pass
 
         intersection_df = self.full_df.iloc[
-            intersection_index: (intersection_index + 6)
+            intersection_index : (intersection_index + 6)
         ]
         intersection_df = intersection_df.reset_index(drop=True)
         intersection_df = intersection_df.set_index(0)
@@ -385,16 +382,13 @@ class SynchroSim:
         intersection_df.columns = intersection_df.iloc[0]
         col_list = intersection_df.columns.tolist()
         if len(col_list) > 1:
-            intersection_df = intersection_df[col_list].agg(
-                " ".join, axis=1).to_frame()
+            intersection_df = intersection_df[col_list].agg(" ".join, axis=1).to_frame()
             intersection_df.columns = intersection_df.iloc[0]
             col_list = intersection_df.columns.tolist()
-            intersection_df = intersection_df[col_list[0]].str.split(
-                expand=True)
+            intersection_df = intersection_df[col_list[0]].str.split(expand=True)
 
         else:
-            intersection_df = intersection_df[col_list[0]].str.split(
-                expand=True)
+            intersection_df = intersection_df[col_list[0]].str.split(expand=True)
 
         newcols = col_list[0].split()
         intersection_df.columns = newcols
