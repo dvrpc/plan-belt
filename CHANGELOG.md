@@ -1,3 +1,9 @@
+## 0.4.3 (2023-06-20)
+
+### Fix
+
+- added usr/bin to point to pdftotext
+
 ## 0.4.2 (2023-06-09)
 
 ### Fix
