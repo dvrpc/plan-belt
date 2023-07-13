@@ -1,3 +1,9 @@
+## 0.4.4 (2023-07-13)
+
+### Fix
+
+- check for cases in max delay where dtype is wrong and cast to flot
+
 ## 0.4.3 (2023-06-20)
 
 ### Fix
