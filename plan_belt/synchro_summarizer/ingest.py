@@ -203,6 +203,13 @@ class SynchroTxt:
                         max_queue.append(df.at[(value, x), match[0]])
                     else:
                         pass
+            for index, list_item in enumerate(max_delay):
+                max_delay[index] = float(list_item)
+                if pd.isnull(list_item):
+                    pass
+                else:
+                    max_delay[index] = float(list_item)
+
             for x in xs:
                 if df.at[(value, x), "Lane Configurations"] == "0":
                     pass
@@ -222,7 +229,8 @@ class SynchroTxt:
                         if x == "R":
                             pass
                         else:
-                            df.at[(value, x), "Delay (s)"] = max(max_delay)
+                            for item in max_delay:
+                                df.at[(value, x), "Delay (s)"] = max(max_delay)
                             try:
                                 df.at[(value, x), match[0]] = max(max_queue)
                             except:
