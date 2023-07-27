@@ -55,6 +55,7 @@ class SynchroTxt:
             "HCM 6th TWSC",
             "HCM Signalized Intersection Capacity Analysis",
             "HCM 6th Signalized Intersection Summary",
+            "HCM 2010 Signalized Intersection Summary",
         ]
         try:
             df = self.whole_csv[index : self.startrows[self.count + 1]]
@@ -67,7 +68,9 @@ class SynchroTxt:
         elif df.loc[0, 0] in possible_report_types:
             report_type = df.loc[0, 0]
         else:
-            print("Report type not in expected locations...")
+            raise ValueError(
+                "Report type not in expected locations, or is not in possible_report_types"
+            )
         unique_name = intersection_name + " " + "| " + report_type
         if df.iloc[2, 0].strip() == "Movement":
             df = df.iloc[2:]
