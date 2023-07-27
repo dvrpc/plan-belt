@@ -1,3 +1,9 @@
+## 0.4.5 (2023-07-27)
+
+### Fix
+
+- add new report type and add value error
+
 ## 0.4.4 (2023-07-13)
 
 ### Fix
