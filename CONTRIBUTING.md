@@ -16,3 +16,7 @@ Planbelt uses conventional commits to automate version updates using semantic ve
 If you prefer not to use commitizen, that's totally fine, but there are still some hooks you'll need to install. With your conda environment activated, run:
 
 ```pre-commit install --hook-type commit-msg --hook-type pre-push```
+
+If you are using commitizen, you can commit with `cz c`, which is basically equivilant to `git commit`. it uses a little TUI to walk you through the commit, and it formats everything so that
+conventional commits are used. why? mostly so that the package version will update automatically based on changes in the repo. e.g., if you fix a bug, the package will go from x.x.1 to x.x.2 
+upon push to main.

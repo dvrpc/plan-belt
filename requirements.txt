@@ -1,0 +1,25 @@
+backports.functools-lru-cache==1.6.5
+black==23.7.0
+brotli==1.0.9
+commitizen==3.6.0
+folium==0.14.0
+geoalchemy2==0.14.1
+geopandas==0.13.2
+ipykernel==6.25.1
+mapclassify==2.5.0
+matplotlib==3.7.2
+munch==4.0.0
+munkres==1.1.4
+openpyxl==3.1.2
+pg-data-etl==0.3.9
+pip-chill==1.0.3
+planbelt @ git+https://github.com/dvrpc/plan-belt
+pooch==1.7.0
+pre-commit==3.3.3
+psycopg2==2.9.6
+pysocks==1.7.1
+python-dotenv==1.0.0
+rtree==1.0.1
+ukkonen==1.0.1
+xlsxwriter==3.1.2
+xyzservices==2023.7.0
