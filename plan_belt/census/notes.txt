@@ -1,0 +1,2 @@
+just leaving a note here where we can discuss any issues. opening a new branch, lets work in the 
+tidycensus branch until we have this working, then i'll let you squash all the commits into one we can merge to main. - mm
