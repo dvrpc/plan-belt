@@ -13,7 +13,7 @@ modules included at the moment:
 * pg-data-etl and config file (included in environment yaml, but config file needs to be generated, see [documentation](https://github.com/aaronfraint/pg-data-etl))
 * postgresql with postgis installed
 * a postgresql db, postgis enabled, and an input and base table (what you want to conflate, and the network to conflate to)
-* a conda / venv using the reqs in this repos environment.yml file. must be activated.
+* an activated conda / venv environment. all needed reqs will be installed if you just use ```pip install git+https://github.com/dvrpc/plan-belt``` or add the same to your reqs.txt or environment.yml.
 
 #### usage
 for help and explanation of params:
