@@ -13,6 +13,7 @@ setup(
         "pg-data-etl @ git+https://github.com/mmorley0395/pg-data-etl",
         "psycopg2-binary",
         "python-dotenv",
+        "sqlalchemy",
     ],
     entry_points={
         "console_scripts": [
