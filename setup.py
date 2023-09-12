@@ -14,6 +14,7 @@ setup(
         "psycopg2-binary",
         "python-dotenv",
         "sqlalchemy",
+        "geoalchemy2",
     ],
     entry_points={
         "console_scripts": [
