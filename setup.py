@@ -7,6 +7,12 @@ setup(
     include_package_data=True,
     install_requires=[
         "Click",
+        "geopandas",
+        "pandas",
+        "matplotlib",
+        "pg-data-etl @ git+https://github.com/mmorley0395/pg-data-etl",
+        "psycopg2-binary",
+        "python-dotenv",
     ],
     entry_points={
         "console_scripts": [
