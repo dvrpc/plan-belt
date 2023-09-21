@@ -1,3 +1,9 @@
+## 0.5.1 (2023-09-21)
+
+### Fix
+
+- add handler for when a row contains none
+
 ## 0.5.0 (2023-08-17)
 
 ## 0.4.5 (2023-07-27)
