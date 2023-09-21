@@ -393,6 +393,7 @@ class SynchroSim:
         intersection_df = intersection_df.dropna(axis=1, how="all")
         intersection_df.columns = intersection_df.iloc[0]
         col_list = intersection_df.columns.tolist()
+        intersection_df.fillna("", inplace=True)
         if len(col_list) > 1:
             intersection_df = intersection_df[col_list].agg(" ".join, axis=1).to_frame()
             intersection_df.columns = intersection_df.iloc[0]
@@ -451,13 +452,20 @@ class SynchroSim:
             df.to_excel(writer, sheet_name="arterial_los", index=False)
             for key in dfs:
                 dfs[key] = dfs[key].transpose()
+
+                # Remove invalid characters (&, :, and space)
+                cleaned_key = re.sub("[&: ]", "", key[16:])
+
+                # Truncate the string to 31 characters if it exceeds that length
+                if len(cleaned_key) > 31:
+                    cleaned_key = cleaned_key[:31]
+
                 dfs[key].to_excel(
                     writer,
-                    sheet_name=re.sub("[&: ]", "", key[16:]),
+                    sheet_name=cleaned_key,
                     index=True,
                 )
-                sheet = re.sub("[&: ]", "", key[16:])
-                writer.sheets[sheet].set_row(2, None, None, {"hidden": True})
+                writer.sheets[cleaned_key].set_row(2, None, None, {"hidden": True})
                 dfs[key].to_excel(
                     writer, sheet_name="summary", index=True, startrow=start_count
                 )
