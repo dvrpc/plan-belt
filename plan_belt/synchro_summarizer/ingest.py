@@ -89,7 +89,14 @@ class SynchroTxt:
         elif "expects" in df.iloc[2, 0].strip():
             self.anomolies[unique_name] = df
         else:
-            print("what else could go wrong?")
+            print(f"!!!!!!something wrong with {intersection_name}")
+            print(f"!!!!!!something wrong with {intersection_name}")
+            print(f"!!!!!!something wrong with {intersection_name}")
+            print(f"!!!!!!something wrong with {intersection_name}")
+            print(f"!!!!!!something wrong with {intersection_name}")
+            print(f"!!!!!!something wrong with {intersection_name}")
+            print(f"!!!!!!something wrong with {intersection_name}")
+            print(f"!!!!!!something wrong with {intersection_name}")
         self.count += 1
         return df, unique_name
 
@@ -484,3 +491,7 @@ class SynchroSim:
     def return_queues_for_intersection(self):
         dfs = self.qb_report()
         return dfs
+
+
+if __name__ == "__main__":
+    SynchroTxt("/mnt/g/My Drive/test/Existing_AM_HCM 6th_report.txt")
