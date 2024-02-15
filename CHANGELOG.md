@@ -1,3 +1,9 @@
+## 0.5.2 (2024-02-15)
+
+### Fix
+
+- add more instructive error
+
 ## 0.5.1 (2023-09-21)
 
 ### Fix
