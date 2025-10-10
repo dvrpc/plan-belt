@@ -7,10 +7,12 @@ geoalchemy2==0.14.1
 geopandas==0.13.2
 ipykernel==6.25.1
 mapclassify==2.5.0
-matplotlib==3.7.2
+matplotlib>=3.9.0
 munch==4.0.0
 munkres==1.1.4
-openpyxl==3.1.2
+numpy>=2.0.0
+openpyxl>=3.1.5
+pandas>=2.0.0
 pg-data-etl==0.3.9
 pip-chill==1.0.3
 planbelt @ git+https://github.com/dvrpc/plan-belt

@@ -78,12 +78,16 @@ class SynchroTxt:
             df.columns = df.iloc[0]
             df = df[1:]
             df.columns = df.columns.str.rstrip()
+            # Remove duplicate columns (Synchro 12 creates empty column names)
+            df = df.loc[:, ~df.columns.duplicated(keep='first')]
         elif df.iloc[2, 0].strip() == "Intersection":
             df = df.iloc[4:]
             df = df.reset_index(drop=True)
             df.columns = df.iloc[0]
             df = df[1:]
             df.columns = df.columns.str.rstrip()
+            # Remove duplicate columns (Synchro 12 creates empty column names)
+            df = df.loc[:, ~df.columns.duplicated(keep='first')]
         elif "not" in df.iloc[2, 0].strip():
             self.anomolies[unique_name] = df
         elif "expects" in df.iloc[2, 0].strip():
@@ -105,7 +109,7 @@ class SynchroTxt:
 
         for index in self.startrows:
             df, unique_name = self.__create_df(index)
-            df = df.replace("-", np.NaN)
+            df = df.replace("-", np.nan)
             if unique_name in self.anomolies:
                 pass
             else:
@@ -125,6 +129,7 @@ class SynchroTxt:
                     "Queue Length 95th (ft)",
                     "HCM 95th %tile Q(veh)",
                     "LnGrp Delay(d),s/veh",
+                    "LnGrp Delay(d), s/veh",  # Synchro 12 version with space
                     "Delay (s)",
                     "Control Delay (s)",
                     "HCM Control Delay (s)",
@@ -134,14 +139,17 @@ class SynchroTxt:
                     "Approach Delay, s/veh",
                     "Approach LOS",
                     "HCM 6th Ctrl Delay",
+                    "HCM 6th Ctrl Delay, s/veh",  # Synchro 12 version with units
                     "HCM 6th LOS",
                     "HCM 2000 Control Delay"
                     "HCM 2000 Level of Service"  # note: this one might need to be
                     # cleaned up, its not in first col
                 ]
+                # Drop NaN columns before query (pandas 2.x compatibility)
+                df = df.dropna(axis=1, how="all")
+                df = df.loc[:, df.columns.notna()]
                 df.query(f"Movement.str.strip() in {field_names}", inplace=True)
                 df = df.reset_index(drop=True)
-                df = df.dropna(axis=1, how="all")
                 df["Movement"] = df["Movement"].str.strip()
                 df = df.transpose()
                 df.columns = df.iloc[0]
@@ -167,8 +175,10 @@ class SynchroTxt:
                     columns={
                         "Lanes": "Lane Configurations",
                         "LnGrp Delay(d),s/veh": "Delay (s)",
+                        "LnGrp Delay(d), s/veh": "Delay (s)",  # Synchro 12 version
                         "Control Delay (s)": "Delay (s)",
                         "HCM Control Delay (s)": "Delay (s)",
+                        "HCM 6th Ctrl Delay, s/veh": "HCM 6th Ctrl Delay",  # Synchro 12 version
                     }
                 )
                 self.__delay_queue_cleanup(df)
@@ -178,13 +188,16 @@ class SynchroTxt:
         """Converts queue from vehicle lengths to feet"""
 
         percentile = re.findall(r"\d+", column_name)[0]
-        df = df.rename(columns={f"{column_name}": f"{percentile} %ile BackOfQ,feet"})
-        df[f"{percentile} %ile BackOfQ,feet"] = df[
-            f"{percentile} %ile BackOfQ,feet"
-        ].apply(pd.to_numeric)
-        df[f"{percentile} %ile BackOfQ,feet"] = (
-            df[f"{percentile} %ile BackOfQ,feet"] * 25
-        ).round()  # 25' per car instead of just car lengths
+        new_column_name = f"{percentile} %ile BackOfQ,feet"
+
+        # Check if column exists before renaming
+        if column_name not in df.columns:
+            return df
+
+        df = df.rename(columns={column_name: new_column_name})
+        # Use pd.to_numeric with errors='coerce' to handle whitespace and invalid values
+        df[new_column_name] = pd.to_numeric(df[new_column_name], errors='coerce')
+        df[new_column_name] = (df[new_column_name] * 25).round()  # 25' per car instead of just car lengths
         return df
 
     def __delay_queue_cleanup(self, df):
@@ -195,6 +208,10 @@ class SynchroTxt:
         Used as a way to ensure that delay and queue length is applied to all relevant
         cells in the final excel output
         """
+        # Check if required columns exist
+        if "Delay (s)" not in df.columns or "Lane Configurations" not in df.columns:
+            return
+
         df_movement = df.index.levels[0]
         cols = df.columns.to_list()
         queue_match = re.compile("....ile BackOfQ,feet")
@@ -214,9 +231,11 @@ class SynchroTxt:
                     else:
                         pass
             for index, list_item in enumerate(max_delay):
-                max_delay[index] = float(list_item)
                 if pd.isnull(list_item):
                     pass
+                elif isinstance(list_item, str) and list_item.strip() == '':
+                    # Handle whitespace strings (Synchro 12)
+                    max_delay[index] = np.nan
                 else:
                     max_delay[index] = float(list_item)
 
@@ -494,4 +513,4 @@ class SynchroSim:
 
 
 if __name__ == "__main__":
-    SynchroTxt("/mnt/g/My Drive/test/Existing_AM_HCM 6th_report.txt")
+    SynchroTxt("plan_belt/synchro_summarizer/VZWissahickon_Ex_report_6th_PM_synchro12.txt")
