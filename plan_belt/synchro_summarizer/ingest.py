@@ -158,12 +158,21 @@ class SynchroTxt:
                     try:
                         df = self.__convert_queue(df, "%ile BackOfQ(50%),veh/ln")
                     except KeyError:
-                        df = self.__convert_queue(df, "%ile BackOfQ(95%),veh/ln")
+                        try:
+                            df = self.__convert_queue(df, "%ile BackOfQ(95%),veh/ln")
+                        except KeyError:
+                            pass
 
                 elif "HCM 6th TWSC" in unique_name:
-                    df = self.__convert_queue(df, "HCM 95th %tile Q(veh)")
+                    try:
+                        df = self.__convert_queue(df, "HCM 95th %tile Q(veh)")
+                    except KeyError:
+                        pass
                 elif "HCM Unsignalized Intersection Capacity Analysis" in unique_name:
-                    df = self.__convert_queue(df, "Queue Length 95th (ft)")
+                    try:
+                        df = self.__convert_queue(df, "Queue Length 95th (ft)")
+                    except KeyError:
+                        pass
                 else:
                     pass
                 df = df.apply(pd.to_numeric, errors="ignore")
@@ -192,7 +201,7 @@ class SynchroTxt:
 
         # Check if column exists before renaming
         if column_name not in df.columns:
-            return df
+            raise KeyError(f"Column '{column_name}' not found in dataframe")
 
         df = df.rename(columns={column_name: new_column_name})
         # Use pd.to_numeric with errors='coerce' to handle whitespace and invalid values
@@ -249,10 +258,6 @@ class SynchroTxt:
                 elif re.findall("<.>", str(df.at[(value, x), "Lane Configurations"])):
                     for x in xs:
                         df.at[(value, x), "Delay (s)"] = max(max_delay)
-                        try:
-                            df.at[(value, x), match[0]] = max(max_queue)
-                        except:
-                            pass
                 elif re.findall("<.", str(df.at[(value, x), "Lane Configurations"])):
                     for x in xs:
                         if x == "R":
@@ -260,20 +265,12 @@ class SynchroTxt:
                         else:
                             for item in max_delay:
                                 df.at[(value, x), "Delay (s)"] = max(max_delay)
-                            try:
-                                df.at[(value, x), match[0]] = max(max_queue)
-                            except:
-                                pass
                 elif re.findall(".>", str(df.at[(value, x), "Lane Configurations"])):
                     for x in xs:
                         if x == "L":
                             pass
                         else:
                             df.at[(value, x), "Delay (s)"] = max(max_delay)
-                            try:
-                                df.at[(value, x), match[0]] = max(max_queue)
-                            except:
-                                pass
 
     def create_csv(self):
         """Creates a csv in the directory the files came from."""
@@ -283,10 +280,28 @@ class SynchroTxt:
         with pd.ExcelWriter(self.dir / "synchro_sum.xlsx") as writer:
             for key in self.dfs:
                 counter_string = str(counter)
-                self.dfs[key].to_excel(
+
+                # Extract intersection-level metrics (HCM 6th Ctrl Delay and HCM 6th LOS)
+                intersection_cols = ["HCM 6th Ctrl Delay", "HCM 6th LOS"]
+                intersection_metrics = {}
+                for col in intersection_cols:
+                    if col in self.dfs[key].columns:
+                        # Get the first non-null value for intersection-level metrics
+                        vals = self.dfs[key][col].dropna()
+                        if len(vals) > 0:
+                            intersection_metrics[col] = vals.iloc[0]
+
+                # Drop only intersection-level columns before writing (keep Lane Configurations)
+                cols_to_drop = [col for col in intersection_cols if col in self.dfs[key].columns]
+                output_df = self.dfs[key].drop(columns=cols_to_drop, errors='ignore')
+
+                # Write main data
+                output_df.to_excel(
                     writer, sheet_name="summary", startrow=df_shape_counter
                 )
-                self.dfs[key].to_excel(writer, sheet_name=counter_string, startrow=1)
+                output_df.to_excel(writer, sheet_name=counter_string, startrow=1)
+
+                # Write intersection name
                 keyseries = pd.Series([key])
                 iterators = [counter_string, "summary"]
                 for val in iterators:
@@ -301,8 +316,45 @@ class SynchroTxt:
                         header=False,
                         startrow=startrow,
                     )
+
+                # Write intersection-level metrics as a separate row if they exist
+                if intersection_metrics:
+                    metrics_row_position = df_shape_counter + output_df.shape[0] + 2
+
+                    # Write "Intersection Summary" header first
+                    header_series = pd.Series(["Intersection Summary"])
+                    for val in iterators:
+                        if val == counter_string:
+                            header_startrow = output_df.shape[0] + 3
+                        elif val == "summary":
+                            header_startrow = metrics_row_position
+                        header_series.to_excel(
+                            writer,
+                            sheet_name=(val),
+                            index=False,
+                            header=False,
+                            startrow=header_startrow,
+                        )
+
+                    # Write the metrics below the header
+                    metrics_series = pd.Series(intersection_metrics)
+                    for val in iterators:
+                        if val == counter_string:
+                            metrics_startrow = output_df.shape[0] + 4
+                        elif val == "summary":
+                            metrics_startrow = metrics_row_position + 1
+                        metrics_series.to_excel(
+                            writer,
+                            sheet_name=(val),
+                            index=True,
+                            header=False,
+                            startrow=metrics_startrow,
+                        )
+
                 counter += 1
-                df_shape_counter += self.dfs[key].shape[0] + 4
+                # Add extra rows for intersection metrics if they exist (header + 2 metric rows)
+                extra_rows = 3 if intersection_metrics else 0
+                df_shape_counter += output_df.shape[0] + 4 + extra_rows
         return Path(self.dir, "synchro_sum.xlsx")
 
     def combine_synchro_sim(self, sim_df, synchro_df):
