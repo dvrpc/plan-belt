@@ -56,6 +56,9 @@ class SynchroTxt:
             "HCM Signalized Intersection Capacity Analysis",
             "HCM 6th Signalized Intersection Summary",
             "HCM 2010 Signalized Intersection Summary",
+            # new HCM 7th report types
+            "HCM 7th LOS",
+            "HCM 95th %tile Q(veh)",
         ]
         try:
             df = self.whole_csv[index : self.startrows[self.count + 1]]
@@ -63,10 +66,22 @@ class SynchroTxt:
             df = self.whole_csv[index:]
         df = df.reset_index(drop=True)
         intersection_name = df.iloc[1, 0]
-        if df.loc[(df.shape[0] - 2), 0] in possible_report_types:
-            report_type = df.loc[(df.shape[0] - 2), 0]
-        elif df.loc[0, 0] in possible_report_types:
-            report_type = df.loc[0, 0]
+
+        # Check second to last row
+        second_to_last = str(df.loc[(df.shape[0] - 2), 0]).strip()
+        first_row = str(df.loc[0, 0]).strip()
+
+        if second_to_last in possible_report_types:
+            report_type = second_to_last
+        elif first_row in possible_report_types:
+            report_type = first_row
+        # Flexible matching for HCM 7th error messages and other variants
+        elif "HCM 7th Edition methodology" in second_to_last:
+            report_type = "HCM 7th Edition (Unsupported)"
+        elif "HCM" in second_to_last and ("7th" in second_to_last or "6th" in second_to_last):
+            report_type = second_to_last
+        elif "HCM" in first_row and ("7th" in first_row or "6th" in first_row):
+            report_type = first_row
         else:
             raise ValueError(
                 "Report type not in expected locations, or is not in possible_report_types"
