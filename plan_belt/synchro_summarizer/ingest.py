@@ -59,6 +59,9 @@ class SynchroTxt:
             # new HCM 7th report types
             "HCM 7th LOS",
             "HCM 95th %tile Q(veh)",
+            "HCM 7th Signalized Intersection Summary",
+            "HCM 7th TWSC",
+            "HCM 7th AWSC",
         ]
         try:
             df = self.whole_csv[index : self.startrows[self.count + 1]]
@@ -67,17 +70,22 @@ class SynchroTxt:
         df = df.reset_index(drop=True)
         intersection_name = df.iloc[1, 0]
 
-        # Check second to last row
+        # Check second to last row, last row, and first row
         second_to_last = str(df.loc[(df.shape[0] - 2), 0]).strip()
+        last_row = str(df.loc[(df.shape[0] - 1), 0]).strip()
         first_row = str(df.loc[0, 0]).strip()
 
         if second_to_last in possible_report_types:
             report_type = second_to_last
+        elif last_row in possible_report_types:
+            report_type = last_row
         elif first_row in possible_report_types:
             report_type = first_row
         # Flexible matching for HCM 7th error messages and other variants
         elif "HCM 7th Edition methodology" in second_to_last:
             report_type = "HCM 7th Edition (Unsupported)"
+        elif "HCM" in last_row and ("7th" in last_row or "6th" in last_row):
+            report_type = last_row
         elif "HCM" in second_to_last and ("7th" in second_to_last or "6th" in second_to_last):
             report_type = second_to_last
         elif "HCM" in first_row and ("7th" in first_row or "6th" in first_row):
@@ -163,12 +171,26 @@ class SynchroTxt:
                 # Drop NaN columns before query (pandas 2.x compatibility)
                 df = df.dropna(axis=1, how="all")
                 df = df.loc[:, df.columns.notna()]
-                df.query(f"Movement.str.strip() in {field_names}", inplace=True)
-                df = df.reset_index(drop=True)
-                df["Movement"] = df["Movement"].str.strip()
-                df = df.transpose()
-                df.columns = df.iloc[0]
-                df = df[1:]
+
+                # Check if this is a Movement-based or Intersection-based report
+                if "Movement" in df.columns:
+                    df.query(f"Movement.str.strip() in {field_names}", inplace=True)
+                    df = df.reset_index(drop=True)
+                    df["Movement"] = df["Movement"].str.strip()
+                    df = df.transpose()
+                    df.columns = df.iloc[0]
+                    df = df[1:]
+                elif "Intersection" in df.columns:
+                    # For TWSC/AWSC reports with Intersection column
+                    df.query(f"Intersection.str.strip() in {field_names}", inplace=True)
+                    df = df.reset_index(drop=True)
+                    df["Intersection"] = df["Intersection"].str.strip()
+                    df = df.transpose()
+                    df.columns = df.iloc[0]
+                    df = df[1:]
+                else:
+                    # Skip if neither column exists (might be an unsupported format)
+                    continue
                 if "HCM 6th Signalized Intersection Summary" in unique_name:
                     try:
                         df = self.__convert_queue(df, "%ile BackOfQ(50%),veh/ln")
