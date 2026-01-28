@@ -156,7 +156,9 @@ class SynchroTxt:
                     "Delay (s)",
                     "Control Delay (s)",
                     "HCM Control Delay (s)",
-                    "Lane LOS" "LnGrp LOS",
+                    "HCM Ctrl Dly (s/v)",  # HCM 7th TWSC version
+                    "Lane LOS",
+                    "LnGrp LOS",
                     "Level of Service",
                     "HCM Lane LOS",
                     "Approach Delay, s/veh",
@@ -164,8 +166,8 @@ class SynchroTxt:
                     "HCM 6th Ctrl Delay",
                     "HCM 6th Ctrl Delay, s/veh",  # Synchro 12 version with units
                     "HCM 6th LOS",
-                    "HCM 2000 Control Delay"
-                    "HCM 2000 Level of Service"  # note: this one might need to be
+                    "HCM 2000 Control Delay",
+                    "HCM 2000 Level of Service",  # note: this one might need to be
                     # cleaned up, its not in first col
                 ]
                 # Drop NaN columns before query (pandas 2.x compatibility)
@@ -200,7 +202,7 @@ class SynchroTxt:
                         except KeyError:
                             pass
 
-                elif "HCM 6th TWSC" in unique_name:
+                elif "HCM 6th TWSC" in unique_name or "HCM 7th TWSC" in unique_name:
                     try:
                         df = self.__convert_queue(df, "HCM 95th %tile Q(veh)")
                     except KeyError:
@@ -224,6 +226,7 @@ class SynchroTxt:
                         "LnGrp Delay(d), s/veh": "Delay (s)",  # Synchro 12 version
                         "Control Delay (s)": "Delay (s)",
                         "HCM Control Delay (s)": "Delay (s)",
+                        "HCM Ctrl Dly (s/v)": "Delay (s)",  # HCM 7th TWSC version
                         "HCM 6th Ctrl Delay, s/veh": "HCM 6th Ctrl Delay",  # Synchro 12 version
                     }
                 )
@@ -279,11 +282,15 @@ class SynchroTxt:
             for index, list_item in enumerate(max_delay):
                 if pd.isnull(list_item):
                     pass
-                elif isinstance(list_item, str) and list_item.strip() == '':
-                    # Handle whitespace strings (Synchro 12)
+                elif isinstance(list_item, str) and list_item.strip() in ('', '-'):
+                    # Handle whitespace strings and dashes (Synchro 12, HCM 7th)
                     max_delay[index] = np.nan
                 else:
                     max_delay[index] = float(list_item)
+
+            # Filter out nan values for max calculation
+            valid_delays = [d for d in max_delay if pd.notna(d)]
+            max_delay_val = max(valid_delays) if valid_delays else np.nan
 
             for x in xs:
                 if df.at[(value, x), "Lane Configurations"] == "0":
@@ -294,20 +301,19 @@ class SynchroTxt:
                     pass
                 elif re.findall("<.>", str(df.at[(value, x), "Lane Configurations"])):
                     for x in xs:
-                        df.at[(value, x), "Delay (s)"] = max(max_delay)
+                        df.at[(value, x), "Delay (s)"] = max_delay_val
                 elif re.findall("<.", str(df.at[(value, x), "Lane Configurations"])):
                     for x in xs:
                         if x == "R":
                             pass
                         else:
-                            for item in max_delay:
-                                df.at[(value, x), "Delay (s)"] = max(max_delay)
+                            df.at[(value, x), "Delay (s)"] = max_delay_val
                 elif re.findall(".>", str(df.at[(value, x), "Lane Configurations"])):
                     for x in xs:
                         if x == "L":
                             pass
                         else:
-                            df.at[(value, x), "Delay (s)"] = max(max_delay)
+                            df.at[(value, x), "Delay (s)"] = max_delay_val
 
     def create_csv(self):
         """Creates a csv in the directory the files came from."""
