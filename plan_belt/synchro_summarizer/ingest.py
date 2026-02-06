@@ -170,6 +170,12 @@ class SynchroTxt:
                     "HCM 2000 Level of Service",  # note: this one might need to be
                     # cleaned up, its not in first col
                 ]
+                # For HCM 7th TWSC reports, realign Minor Lane section data
+                # This must happen BEFORE dropping NaN columns, as the SBLn2/NBLn2 data
+                # is often in columns with None/NaN names that would otherwise be dropped
+                if "HCM 7th TWSC" in unique_name:
+                    df = self.__realign_twsc_minor_lane_data(df)
+
                 # Drop NaN columns before query (pandas 2.x compatibility)
                 df = df.dropna(axis=1, how="all")
                 df = df.loc[:, df.columns.notna()]
@@ -233,6 +239,97 @@ class SynchroTxt:
                 self.__delay_queue_cleanup(df)
                 self.dfs[unique_name] = df
 
+    def __realign_twsc_minor_lane_data(self, df):
+        """
+        Realign HCM 7th TWSC Minor Lane section data to match Movement columns.
+
+        The Minor Lane/Major Mvmt section has a different column structure than
+        the Movement section - it's shifted right by one column and uses Ln1/Ln2
+        suffixes (e.g., SBLn1, SBLn2) instead of L/R (e.g., SBL, SBR).
+
+        This method detects the Minor Lane section and realigns its data rows
+        to match the Movement column positions.
+        """
+        # Get the first column name (row identifier)
+        first_col = df.columns[0]
+        if first_col not in df.columns:
+            return df
+
+        # Check if there's a Minor Lane/Major Mvmt row
+        minor_lane_mask = df[first_col].astype(str).str.strip() == "Minor Lane/Major Mvmt"
+        if not minor_lane_mask.any():
+            return df
+
+        minor_lane_idx = df[minor_lane_mask].index[0]
+        minor_lane_row = df.loc[minor_lane_idx]
+
+        # Get the Movement column headers (from the dataframe columns)
+        movement_cols = list(df.columns)
+
+        # Parse the Minor Lane header to build column mapping
+        # The Minor Lane row contains the actual column names for the section below it
+        minor_lane_headers = [str(v).strip() if pd.notna(v) else '' for v in minor_lane_row.values]
+
+        # Lane-level metric rows that need realignment
+        lane_metrics = [
+            "HCM Lane V/C Ratio",
+            "HCM Ctrl Dly (s/v)",
+            "HCM Lane LOS",
+            "HCM 95th %tile Q(veh)",
+        ]
+
+        # Build mapping from Minor Lane column names to Movement column names
+        # e.g., SBLn1 -> SBL, SBLn2 -> SBR, NBLn1 -> NBL, etc.
+        def normalize_lane_name(name):
+            """Convert Ln1/Ln2 suffixes to L/R movements"""
+            name = name.strip()
+            if name.endswith('Ln1'):
+                # Ln1 is typically the left turn lane
+                return name[:-3] + 'L'
+            elif name.endswith('Ln2'):
+                # Ln2 is typically the right turn lane (or through if no right)
+                return name[:-3] + 'R'
+            return name
+
+        # Find where actual data starts in Minor Lane section (skip the blank column)
+        minor_data_start = None
+        for i, header in enumerate(minor_lane_headers):
+            if header and header not in ['Minor Lane/Major Mvmt', '']:
+                minor_data_start = i
+                break
+
+        if minor_data_start is None:
+            return df
+
+        # For each lane metric row, realign the data
+        for metric in lane_metrics:
+            metric_mask = df[first_col].astype(str).str.strip() == metric
+            if not metric_mask.any():
+                continue
+
+            metric_idx = df[metric_mask].index[0]
+            old_values = df.loc[metric_idx].copy()
+
+            # Create new row with realigned values
+            new_values = {col: np.nan for col in movement_cols}
+            new_values[first_col] = metric  # Keep the row identifier
+
+            # Map each Minor Lane column to its corresponding Movement column
+            for i, minor_header in enumerate(minor_lane_headers):
+                if i < len(old_values) and minor_header and minor_header not in ['Minor Lane/Major Mvmt', '']:
+                    normalized = normalize_lane_name(minor_header)
+                    # Find the matching Movement column
+                    for mov_col in movement_cols:
+                        if str(mov_col).strip() == normalized:
+                            new_values[mov_col] = old_values.iloc[i]
+                            break
+
+            # Update the row
+            for col in movement_cols:
+                df.at[metric_idx, col] = new_values[col]
+
+        return df
+
     def __convert_queue(self, df, column_name: str):
         """Converts queue from vehicle lengths to feet"""
 
@@ -271,7 +368,8 @@ class SynchroTxt:
             max_queue = []
             xs = df.xs(value).index.tolist()
             for x in xs:
-                if df.at[(value, x), "Lane Configurations"] == "1":
+                lane_config = str(df.at[(value, x), "Lane Configurations"]).strip()
+                if lane_config == "1":
                     pass  # max delay not needed if its its own lane w/o a shared mvmt
                 else:
                     max_delay.append(df.at[(value, x), "Delay (s)"])
@@ -293,22 +391,23 @@ class SynchroTxt:
             max_delay_val = max(valid_delays) if valid_delays else np.nan
 
             for x in xs:
-                if df.at[(value, x), "Lane Configurations"] == "0":
+                lane_config = str(df.at[(value, x), "Lane Configurations"]).strip()
+                if lane_config == "0":
                     pass
                 elif pd.isnull(df.at[(value, x), "Lane Configurations"]):
                     pass
-                elif df.at[(value, x), "Lane Configurations"] == "1":
+                elif lane_config == "1":
                     pass
-                elif re.findall("<.>", str(df.at[(value, x), "Lane Configurations"])):
+                elif re.findall("<.>", lane_config):
                     for x in xs:
                         df.at[(value, x), "Delay (s)"] = max_delay_val
-                elif re.findall("<.", str(df.at[(value, x), "Lane Configurations"])):
+                elif re.findall("<.", lane_config):
                     for x in xs:
                         if x == "R":
                             pass
                         else:
                             df.at[(value, x), "Delay (s)"] = max_delay_val
-                elif re.findall(".>", str(df.at[(value, x), "Lane Configurations"])):
+                elif re.findall(".>", lane_config):
                     for x in xs:
                         if x == "L":
                             pass
