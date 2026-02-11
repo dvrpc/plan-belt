@@ -236,7 +236,12 @@ class SynchroTxt:
                         "HCM 6th Ctrl Delay, s/veh": "HCM 6th Ctrl Delay",  # Synchro 12 version
                     }
                 )
-                self.__delay_queue_cleanup(df)
+                # Only apply delay/queue cleanup for signalized intersections.
+                # TWSC/AWSC movements have independently-calculated control delays
+                # that should not be equalized across lane groups.
+                unsignalized_types = ["TWSC", "AWSC", "Unsignalized"]
+                if not any(t in unique_name for t in unsignalized_types):
+                    self.__delay_queue_cleanup(df)
                 self.dfs[unique_name] = df
 
     def __realign_twsc_minor_lane_data(self, df):
