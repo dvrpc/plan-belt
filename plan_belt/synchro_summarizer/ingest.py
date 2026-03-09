@@ -115,6 +115,8 @@ class SynchroTxt:
             self.anomolies[unique_name] = df
         elif "expects" in df.iloc[2, 0].strip():
             self.anomolies[unique_name] = df
+        elif "supports" in df.iloc[2, 0].strip():
+            self.anomolies[unique_name] = df
         else:
             print(f"!!!!!!something wrong with {intersection_name}")
             print(f"!!!!!!something wrong with {intersection_name}")
@@ -166,6 +168,8 @@ class SynchroTxt:
                     "HCM 6th Ctrl Delay",
                     "HCM 6th Ctrl Delay, s/veh",  # Synchro 12 version with units
                     "HCM 6th LOS",
+                    "HCM 7th Control Delay, s/veh",
+                    "HCM 7th LOS",
                     "HCM 2000 Control Delay",
                     "HCM 2000 Level of Service",  # note: this one might need to be
                     # cleaned up, its not in first col
@@ -208,6 +212,12 @@ class SynchroTxt:
                         except KeyError:
                             pass
 
+                elif "HCM 7th Signalized Intersection Summary" in unique_name:
+                    try:
+                        df = self.__convert_queue(df, "%ile BackOfQ(95%),veh/ln")
+                    except KeyError:
+                        pass
+
                 elif "HCM 6th TWSC" in unique_name or "HCM 7th TWSC" in unique_name:
                     try:
                         df = self.__convert_queue(df, "HCM 95th %tile Q(veh)")
@@ -220,7 +230,23 @@ class SynchroTxt:
                         pass
                 else:
                     pass
-                df = df.apply(pd.to_numeric, errors="ignore")
+                df = df.apply(lambda col: col.str.strip("' ") if col.dtype == object else col)
+                df = df.replace("", np.nan)
+                def _try_numeric(col):
+                    if col.dtype != object:
+                        return col
+                    # Preserve columns with angle brackets (e.g., Lane Configurations: <1>, >1)
+                    if col.astype(str).str.contains("[<>]", regex=True).any():
+                        return col
+                    converted = pd.to_numeric(col, errors="coerce")
+                    # Only use conversion if at least one value survived (non-null).
+                    # This preserves LOS letter columns (A/B/C/D/E/F) which would
+                    # all become NaN under coerce, while fixing numeric-string columns.
+                    if col.notna().any() and converted.notna().sum() == 0:
+                        return col
+                    return converted
+
+                df = df.apply(_try_numeric)
                 df.index = pd.MultiIndex.from_arrays(
                     [df.index.str[:2], df.index.str[2:]]
                 )
@@ -234,6 +260,7 @@ class SynchroTxt:
                         "HCM Control Delay (s)": "Delay (s)",
                         "HCM Ctrl Dly (s/v)": "Delay (s)",  # HCM 7th TWSC version
                         "HCM 6th Ctrl Delay, s/veh": "HCM 6th Ctrl Delay",  # Synchro 12 version
+                        "HCM 7th Control Delay, s/veh": "HCM 7th Ctrl Delay",
                     }
                 )
                 # Only apply delay/queue cleanup for signalized intersections.
@@ -429,7 +456,7 @@ class SynchroTxt:
                 counter_string = str(counter)
 
                 # Extract intersection-level metrics (HCM 6th Ctrl Delay and HCM 6th LOS)
-                intersection_cols = ["HCM 6th Ctrl Delay", "HCM 6th LOS"]
+                intersection_cols = ["HCM 6th Ctrl Delay", "HCM 6th LOS", "HCM 7th Ctrl Delay", "HCM 7th LOS"]
                 intersection_metrics = {}
                 for col in intersection_cols:
                     if col in self.dfs[key].columns:
