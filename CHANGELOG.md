@@ -1,3 +1,23 @@
+## 0.6.2 (2026-03-10)
+
+### Fix
+
+- number formatting in excel output, intersection adjustments
+- TWSC movement now has independent delay
+- Correct HCM 7th TWSC Minor Lane data parsing
+- Handle HCM 7th and other report variations
+
+## 0.6.1 (2025-11-21)
+
+## 0.6.0 (2025-10-20)
+
+### Fix
+
+- accommodate more report types
+- accommodate HCM 7 type report
+- formatting
+- accommodate synchro v12, backward compatible
+
 ## 0.5.2 (2024-02-15)
 
 ### Fix
