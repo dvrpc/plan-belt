@@ -62,6 +62,8 @@ class SynchroTxt:
             "HCM 7th Signalized Intersection Summary",
             "HCM 7th TWSC",
             "HCM 7th AWSC",
+            # Synchro Queues report
+            "Queues",
         ]
         try:
             df = self.whole_csv[index : self.startrows[self.count + 1]]
@@ -103,6 +105,16 @@ class SynchroTxt:
             df.columns = df.columns.str.rstrip()
             # Remove duplicate columns (Synchro 12 creates empty column names)
             df = df.loc[:, ~df.columns.duplicated(keep='first')]
+        elif df.iloc[2, 0].strip() == "Lane Group":
+            df = df.iloc[2:]
+            df = df.reset_index(drop=True)
+            df.columns = df.iloc[0]
+            df = df[1:]
+            df.columns = df.columns.str.rstrip()
+            # Remove duplicate columns (Synchro 12 creates empty column names)
+            df = df.loc[:, ~df.columns.duplicated(keep='first')]
+            # Rename to "Movement" so the rest of the pipeline works uniformly
+            df = df.rename(columns={"Lane Group": "Movement"})
         elif df.iloc[2, 0].strip() == "Intersection":
             df = df.iloc[4:]
             df = df.reset_index(drop=True)
@@ -144,6 +156,7 @@ class SynchroTxt:
                     "Lane Configurations",
                     "Lanes",
                     "Traffic Volume (veh/h)",
+                    "Traffic Volume (vph)",
                     "Traffic Vol, veh/h",
                     "V/C Ratio(X)",
                     "v/c Ratio",
@@ -157,13 +170,16 @@ class SynchroTxt:
                     "LnGrp Delay(d), s/veh",  # Synchro 12 version with space
                     "Delay (s)",
                     "Control Delay (s)",
+                    "Control Delay (s/veh)",  # Queues report version
                     "HCM Control Delay (s)",
                     "HCM Ctrl Dly (s/v)",  # HCM 7th TWSC version
                     "Lane LOS",
                     "LnGrp LOS",
+                    "LOS",  # Queues report version
                     "Level of Service",
                     "HCM Lane LOS",
                     "Approach Delay, s/veh",
+                    "Approach Delay (s/veh)",  # Queues report version
                     "Approach LOS",
                     "HCM 6th Ctrl Delay",
                     "HCM 6th Ctrl Delay, s/veh",  # Synchro 12 version with units
@@ -179,6 +195,22 @@ class SynchroTxt:
                 # is often in columns with None/NaN names that would otherwise be dropped
                 if "HCM 7th TWSC" in unique_name:
                     df = self.__realign_twsc_minor_lane_data(df)
+
+                # For Queues reports, extract intersection-level summary before filtering
+                queues_ctrl_delay = None
+                queues_los = None
+                if "Queues" in unique_name and "Movement" in df.columns:
+                    delay_mask = df["Movement"].astype(str).str.contains("Intersection Signal Delay", na=False)
+                    if delay_mask.any():
+                        row_idx = delay_mask.idxmax()
+                        delay_match = re.search(r'Intersection Signal Delay.*?:\s*([\d.]+)', str(df.at[row_idx, "Movement"]))
+                        if delay_match:
+                            queues_ctrl_delay = float(delay_match.group(1))
+                        for col in df.columns:
+                            los_match = re.search(r'Intersection LOS\s*:\s*([A-F])', str(df.at[row_idx, col]))
+                            if los_match:
+                                queues_los = los_match.group(1)
+                                break
 
                 # Drop NaN columns before query (pandas 2.x compatibility)
                 df = df.dropna(axis=1, how="all")
@@ -203,6 +235,11 @@ class SynchroTxt:
                 else:
                     # Skip if neither column exists (might be an unsupported format)
                     continue
+                # Attach Queues intersection-level summary as synthetic columns
+                if queues_ctrl_delay is not None:
+                    df["Queues Ctrl Delay"] = queues_ctrl_delay
+                if queues_los is not None:
+                    df["Queues LOS"] = queues_los
                 if "HCM 6th Signalized Intersection Summary" in unique_name:
                     try:
                         df = self.__convert_queue(df, "%ile BackOfQ(50%),veh/ln")
@@ -257,6 +294,9 @@ class SynchroTxt:
                         "LnGrp Delay(d),s/veh": "Delay (s)",
                         "LnGrp Delay(d), s/veh": "Delay (s)",  # Synchro 12 version
                         "Control Delay (s)": "Delay (s)",
+                        "Control Delay (s/veh)": "Delay (s)",  # Queues report version
+                        "Approach Delay (s/veh)": "Approach Delay, s/veh",  # Queues report version
+                        "LOS": "LnGrp LOS",  # Queues report version
                         "HCM Control Delay (s)": "Delay (s)",
                         "HCM Ctrl Dly (s/v)": "Delay (s)",  # HCM 7th TWSC version
                         "HCM 6th Ctrl Delay, s/veh": "HCM 6th Ctrl Delay",  # Synchro 12 version
@@ -456,7 +496,7 @@ class SynchroTxt:
                 counter_string = str(counter)
 
                 # Extract intersection-level metrics (HCM 6th Ctrl Delay and HCM 6th LOS)
-                intersection_cols = ["HCM 6th Ctrl Delay", "HCM 6th LOS", "HCM 7th Ctrl Delay", "HCM 7th LOS"]
+                intersection_cols = ["HCM 6th Ctrl Delay", "HCM 6th LOS", "HCM 7th Ctrl Delay", "HCM 7th LOS", "Queues Ctrl Delay", "Queues LOS"]
                 intersection_metrics = {}
                 for col in intersection_cols:
                     if col in self.dfs[key].columns:
