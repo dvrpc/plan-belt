@@ -170,7 +170,7 @@ class SynchroTxt:
                     "LnGrp Delay(d), s/veh",  # Synchro 12 version with space
                     "Delay (s)",
                     "Control Delay (s)",
-                    "Control Delay (s/veh)",  # Queues report version
+                    "Total Delay (s/veh)",  # Queues report version (Control Delay + Queue Delay)
                     "HCM Control Delay (s)",
                     "HCM Ctrl Dly (s/v)",  # HCM 7th TWSC version
                     "Lane LOS",
@@ -275,6 +275,9 @@ class SynchroTxt:
                     # Preserve columns with angle brackets (e.g., Lane Configurations: <1>, >1)
                     if col.astype(str).str.contains("[<>]", regex=True).any():
                         return col
+                    # Preserve columns with # prefix (Synchro "exceeds capacity" marker, e.g., #259, m#115)
+                    if col.dropna().astype(str).str.contains(r"#", regex=True).any():
+                        return col
                     converted = pd.to_numeric(col, errors="coerce")
                     # Only use conversion if at least one value survived (non-null).
                     # This preserves LOS letter columns (A/B/C/D/E/F) which would
@@ -294,7 +297,7 @@ class SynchroTxt:
                         "LnGrp Delay(d),s/veh": "Delay (s)",
                         "LnGrp Delay(d), s/veh": "Delay (s)",  # Synchro 12 version
                         "Control Delay (s)": "Delay (s)",
-                        "Control Delay (s/veh)": "Delay (s)",  # Queues report version
+                        "Total Delay (s/veh)": "Delay (s)",  # Queues report version (Control + Queue Delay)
                         "Approach Delay (s/veh)": "Approach Delay, s/veh",  # Queues report version
                         "LOS": "LnGrp LOS",  # Queues report version
                         "HCM Control Delay (s)": "Delay (s)",
@@ -306,7 +309,8 @@ class SynchroTxt:
                 # Only apply delay/queue cleanup for signalized intersections.
                 # TWSC/AWSC movements have independently-calculated control delays
                 # that should not be equalized across lane groups.
-                unsignalized_types = ["TWSC", "AWSC", "Unsignalized"]
+                # Queues reports already report Total Delay per movement — no equalization needed.
+                unsignalized_types = ["TWSC", "AWSC", "Unsignalized", "Queues"]
                 if not any(t in unique_name for t in unsignalized_types):
                     self.__delay_queue_cleanup(df)
                 self.dfs[unique_name] = df
