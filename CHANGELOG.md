@@ -1,3 +1,9 @@
+## 0.6.4 (2026-03-19)
+
+### Fix
+
+- wrong delay row, keep prefix characters
+
 ## 0.6.3 (2026-03-11)
 
 ### Fix
